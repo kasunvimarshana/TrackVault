@@ -206,7 +206,7 @@ class SyncService
             version: $serverVersion + 1,
             id: $serverId,
             createdAt: $entity->getCreatedAt(),
-            updatedAt: new \DateTime
+            updatedAt: new \DateTime()
         );
 
         $savedEntity = $this->supplierRepository->save($updatedEntity);
@@ -274,7 +274,7 @@ class SyncService
                     version: $entity->getVersion() + 1,
                     id: $serverId,
                     createdAt: $entity->getCreatedAt(),
-                    updatedAt: new \DateTime
+                    updatedAt: new \DateTime()
                 );
 
                 $savedEntity = $this->supplierRepository->save($updatedEntity);
@@ -315,7 +315,7 @@ class SyncService
                     version: $entity->getVersion() + 1,
                     id: $serverId,
                     createdAt: $entity->getCreatedAt(),
-                    updatedAt: new \DateTime
+                    updatedAt: new \DateTime()
                 );
 
                 $savedEntity = $this->supplierRepository->save($mergedEntity);
