@@ -132,7 +132,7 @@ class ProductRateEntity
 
     public function isCurrentlyEffective(): bool
     {
-        return $this->isEffectiveOn(new \DateTime);
+        return $this->isEffectiveOn(new \DateTime());
     }
 
     public function activate(): void

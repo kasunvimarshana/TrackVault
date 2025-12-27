@@ -37,7 +37,7 @@ class GetCurrentRateUseCase
             throw new \InvalidArgumentException("Product with ID {$productId} not found");
         }
 
-        $date = $date ?? new \DateTime;
+        $date = $date ?? new \DateTime();
         $rate = $this->rateRepository->getCurrentRate($productId, $date, $unit);
 
         if ($rate === null) {
