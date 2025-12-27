@@ -228,9 +228,10 @@ class SyncService {
         if (collection.id) {
           // Check server version
           try {
-            const serverCollection = await ApiClient.getCollection(collection.id);
+            const serverResponse = await ApiClient.getCollection(collection.id);
+            const serverCollection = serverResponse.data;
             
-            if (serverCollection.version > collection.version) {
+            if (serverCollection && serverCollection.version > collection.version) {
               // Server has newer version - update local
               await CollectionRepository.update(collection.id, serverCollection);
               count++;

@@ -22,7 +22,8 @@ const SupplierListScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const loadSuppliers = async () => {
     try {
-      const response = await ApiClient.getSuppliers({ search });
+      const params = search.trim() ? { search: search.trim() } : {};
+      const response = await ApiClient.getSuppliers(params);
       if (response.success && response.data) {
         setSuppliers(Array.isArray(response.data) ? response.data : response.data.data || []);
       }

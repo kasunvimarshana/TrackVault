@@ -90,7 +90,7 @@ class DatabaseService {
         created_at TEXT,
         updated_at TEXT,
         deleted_at TEXT,
-        FOREIGN KEY (product_id) REFERENCES products(id)
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
       );
     `);
 
@@ -116,8 +116,8 @@ class DatabaseService {
         created_at TEXT,
         updated_at TEXT,
         deleted_at TEXT,
-        FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
-        FOREIGN KEY (product_id) REFERENCES products(id)
+        FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE RESTRICT,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
       );
     `);
 
@@ -141,7 +141,7 @@ class DatabaseService {
         created_at TEXT,
         updated_at TEXT,
         deleted_at TEXT,
-        FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+        FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE RESTRICT
       );
     `);
 

@@ -76,9 +76,11 @@ class CollectionController extends Controller
             $rate = $request->rate_per_unit;
             if (!$rate) {
                 $product = Product::find($request->product_id);
-                $currentRate = $product->currentRate();
-                if ($currentRate) {
-                    $rate = $currentRate->rate_per_unit;
+                if ($product) {
+                    $currentRate = $product->currentRate();
+                    if ($currentRate) {
+                        $rate = $currentRate->rate_per_unit;
+                    }
                 }
             }
 
