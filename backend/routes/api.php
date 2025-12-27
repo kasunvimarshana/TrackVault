@@ -69,4 +69,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/dashboard/stats', [App\Http\Controllers\Api\DashboardController::class, 'stats']);
     Route::get('/dashboard/recent-collections', [App\Http\Controllers\Api\DashboardController::class, 'recentCollections']);
     Route::get('/dashboard/recent-payments', [App\Http\Controllers\Api\DashboardController::class, 'recentPayments']);
+
+    // Sync routes for offline support
+    Route::prefix('sync')->group(function () {
+        Route::post('/', [App\Http\Controllers\Api\SyncController::class, 'sync']);
+        Route::get('/changes', [App\Http\Controllers\Api\SyncController::class, 'getChanges']);
+        Route::post('/resolve-conflict', [App\Http\Controllers\Api\SyncController::class, 'resolveConflict']);
+        Route::get('/status', [App\Http\Controllers\Api\SyncController::class, 'status']);
+    });
 });
