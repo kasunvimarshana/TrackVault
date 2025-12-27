@@ -105,31 +105,38 @@ class SyncService
      */
     private function createNewSupplier(array $data, ?string $localId, int $userId): array
     {
-        $supplier = \App\Models\Supplier::create([
-            'name' => $data['name'],
-            'code' => $data['code'] ?? 'SUP' . str_pad(\App\Models\Supplier::count() + 1, 6, '0', STR_PAD_LEFT),
-            'contact_person' => $data['contact_person'] ?? null,
-            'phone' => $data['phone'] ?? null,
-            'email' => $data['email'] ?? null,
-            'address' => $data['address'] ?? null,
-            'city' => $data['city'] ?? null,
-            'state' => $data['state'] ?? null,
-            'country' => $data['country'] ?? null,
-            'postal_code' => $data['postal_code'] ?? null,
-            'status' => $data['status'] ?? 'active',
-            'version' => 1,
-        ]);
+        // Generate unique code using timestamp and random component to avoid race conditions
+        $code = $data['code'] ?? 'SUP' . time() . rand(1000, 9999);
+        
+        // Create through repository instead of direct model access
+        $entity = new \App\Domain\Entities\SupplierEntity(
+            name: $data['name'],
+            code: $code,
+            contactPerson: $data['contact_person'] ?? null,
+            phone: $data['phone'] ?? null,
+            email: $data['email'] ?? null,
+            address: $data['address'] ?? null,
+            city: $data['city'] ?? null,
+            state: $data['state'] ?? null,
+            country: $data['country'] ?? null,
+            postalCode: $data['postal_code'] ?? null,
+            status: $data['status'] ?? 'active'
+        );
 
-        \App\Models\AuditLog::log('create', 'Supplier', $supplier->id, null, $supplier->toArray(), 
+        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
+        $savedEntity = $repository->save($entity);
+
+        // Audit logging - TODO: Should be delegated to an audit service
+        \App\Models\AuditLog::log('create', 'Supplier', $savedEntity->getId(), null, $savedEntity->toArray(), 
             'Supplier created via sync', $userId);
 
         return [
             'status' => 'success',
             'action' => 'created',
             'local_id' => $localId,
-            'server_id' => $supplier->id,
-            'version' => $supplier->version,
-            'data' => $supplier->toArray(),
+            'server_id' => $savedEntity->getId(),
+            'version' => $savedEntity->getVersion(),
+            'data' => $savedEntity->toArray(),
         ];
     }
 
@@ -138,8 +145,15 @@ class SyncService
      */
     private function updateExistingSupplier(int $serverId, array $data, int $clientVersion, int $userId): array
     {
-        $supplier = \App\Models\Supplier::findOrFail($serverId);
-        $serverVersion = $supplier->version ?? 1;
+        // Use repository instead of direct model access
+        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
+        $entity = $repository->findById($serverId);
+
+        if ($entity === null) {
+            throw new \RuntimeException("Supplier with ID {$serverId} not found");
+        }
+
+        $serverVersion = $entity->getVersion();
 
         // Conflict detection: Check if server version matches client version
         if ($serverVersion !== $clientVersion) {
@@ -150,41 +164,44 @@ class SyncService
                 'server_id' => $serverId,
                 'local_version' => $clientVersion,
                 'server_version' => $serverVersion,
-                'server_data' => $supplier->toArray(),
+                'server_data' => $entity->toArray(),
                 'client_data' => $data,
                 'message' => 'Version conflict: server has been modified since last sync',
             ];
         }
 
-        // No conflict - proceed with update
-        $oldData = $supplier->toArray();
+        // No conflict - create updated entity
+        $updatedEntity = new \App\Domain\Entities\SupplierEntity(
+            name: $data['name'] ?? $entity->getName(),
+            code: $data['code'] ?? $entity->getCode(),
+            contactPerson: $data['contact_person'] ?? $entity->getContactPerson(),
+            phone: $data['phone'] ?? $entity->getPhone(),
+            email: $data['email'] ?? $entity->getEmail(),
+            address: $data['address'] ?? $entity->getAddress(),
+            city: $data['city'] ?? $entity->getCity(),
+            state: $data['state'] ?? $entity->getState(),
+            country: $data['country'] ?? $entity->getCountry(),
+            postalCode: $data['postal_code'] ?? $entity->getPostalCode(),
+            status: $data['status'] ?? $entity->getStatus(),
+            version: $serverVersion + 1,
+            id: $serverId,
+            createdAt: $entity->getCreatedAt(),
+            updatedAt: new \DateTime()
+        );
 
-        $supplier->update([
-            'name' => $data['name'] ?? $supplier->name,
-            'code' => $data['code'] ?? $supplier->code,
-            'contact_person' => $data['contact_person'] ?? $supplier->contact_person,
-            'phone' => $data['phone'] ?? $supplier->phone,
-            'email' => $data['email'] ?? $supplier->email,
-            'address' => $data['address'] ?? $supplier->address,
-            'city' => $data['city'] ?? $supplier->city,
-            'state' => $data['state'] ?? $supplier->state,
-            'country' => $data['country'] ?? $supplier->country,
-            'postal_code' => $data['postal_code'] ?? $supplier->postal_code,
-            'status' => $data['status'] ?? $supplier->status,
-            'version' => $serverVersion + 1,
-        ]);
+        $savedEntity = $repository->save($updatedEntity);
 
-        $supplier->refresh();
-
-        \App\Models\AuditLog::log('update', 'Supplier', $supplier->id, $oldData, $supplier->toArray(), 
+        // Audit logging - TODO: Should be delegated to an audit service
+        \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
+            $entity->toArray(), $savedEntity->toArray(), 
             'Supplier updated via sync', $userId);
 
         return [
             'status' => 'success',
             'action' => 'updated',
-            'server_id' => $supplier->id,
-            'version' => $supplier->version,
-            'data' => $supplier->toArray(),
+            'server_id' => $savedEntity->getId(),
+            'version' => $savedEntity->getVersion(),
+            'data' => $savedEntity->toArray(),
         ];
     }
 
@@ -199,7 +216,12 @@ class SyncService
      */
     public function resolveConflict(int $serverId, array $clientData, string $strategy, int $userId): array
     {
-        $supplier = \App\Models\Supplier::findOrFail($serverId);
+        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
+        $entity = $repository->findById($serverId);
+
+        if ($entity === null) {
+            throw new \RuntimeException("Supplier with ID {$serverId} not found");
+        }
 
         switch ($strategy) {
             case 'server_wins':
@@ -207,42 +229,75 @@ class SyncService
                 return [
                     'status' => 'resolved',
                     'strategy' => 'server_wins',
-                    'data' => $supplier->toArray(),
+                    'data' => $entity->toArray(),
                 ];
 
             case 'client_wins':
                 // Apply client changes, increment version
-                $oldData = $supplier->toArray();
-                $supplier->update(array_merge($clientData, [
-                    'version' => $supplier->version + 1,
-                ]));
-                $supplier->refresh();
+                $updatedEntity = new \App\Domain\Entities\SupplierEntity(
+                    name: $clientData['name'] ?? $entity->getName(),
+                    code: $clientData['code'] ?? $entity->getCode(),
+                    contactPerson: $clientData['contact_person'] ?? $entity->getContactPerson(),
+                    phone: $clientData['phone'] ?? $entity->getPhone(),
+                    email: $clientData['email'] ?? $entity->getEmail(),
+                    address: $clientData['address'] ?? $entity->getAddress(),
+                    city: $clientData['city'] ?? $entity->getCity(),
+                    state: $clientData['state'] ?? $entity->getState(),
+                    country: $clientData['country'] ?? $entity->getCountry(),
+                    postalCode: $clientData['postal_code'] ?? $entity->getPostalCode(),
+                    status: $clientData['status'] ?? $entity->getStatus(),
+                    version: $entity->getVersion() + 1,
+                    id: $serverId,
+                    createdAt: $entity->getCreatedAt(),
+                    updatedAt: new \DateTime()
+                );
 
-                \App\Models\AuditLog::log('update', 'Supplier', $supplier->id, $oldData, $supplier->toArray(), 
+                $savedEntity = $repository->save($updatedEntity);
+
+                // Audit logging - TODO: Should be delegated to an audit service
+                \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
+                    $entity->toArray(), $savedEntity->toArray(), 
                     'Conflict resolved: client wins', $userId);
 
                 return [
                     'status' => 'resolved',
                     'strategy' => 'client_wins',
-                    'data' => $supplier->toArray(),
+                    'data' => $savedEntity->toArray(),
                 ];
 
             case 'merge':
                 // Intelligent merge - preserve non-conflicting changes
-                $oldData = $supplier->toArray();
-                $merged = $this->mergeData($supplier->toArray(), $clientData);
-                $supplier->update(array_merge($merged, [
-                    'version' => $supplier->version + 1,
-                ]));
-                $supplier->refresh();
+                $mergedData = $this->mergeData($entity->toArray(), $clientData);
+                
+                $mergedEntity = new \App\Domain\Entities\SupplierEntity(
+                    name: $mergedData['name'],
+                    code: $mergedData['code'],
+                    contactPerson: $mergedData['contact_person'] ?? null,
+                    phone: $mergedData['phone'] ?? null,
+                    email: $mergedData['email'] ?? null,
+                    address: $mergedData['address'] ?? null,
+                    city: $mergedData['city'] ?? null,
+                    state: $mergedData['state'] ?? null,
+                    country: $mergedData['country'] ?? null,
+                    postalCode: $mergedData['postal_code'] ?? null,
+                    status: $mergedData['status'] ?? 'active',
+                    version: $entity->getVersion() + 1,
+                    id: $serverId,
+                    createdAt: $entity->getCreatedAt(),
+                    updatedAt: new \DateTime()
+                );
 
-                \App\Models\AuditLog::log('update', 'Supplier', $supplier->id, $oldData, $supplier->toArray(), 
+                $savedEntity = $repository->save($mergedEntity);
+
+                // Audit logging - TODO: Should be delegated to an audit service
+                \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
+                    $entity->toArray(), $savedEntity->toArray(), 
                     'Conflict resolved: merged', $userId);
 
                 return [
                     'status' => 'resolved',
                     'strategy' => 'merge',
-                    'data' => $supplier->toArray(),
+                    'data' => $savedEntity->toArray(),
                 ];
 
             default:
