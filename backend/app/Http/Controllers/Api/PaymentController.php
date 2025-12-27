@@ -2,27 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Application\DTOs\PaymentDTO;
+use App\Application\UseCases\Payment\CalculateBalanceUseCase;
 use App\Application\UseCases\Payment\CreatePaymentUseCase;
-use App\Application\UseCases\Payment\UpdatePaymentUseCase;
+use App\Application\UseCases\Payment\DeletePaymentUseCase;
 use App\Application\UseCases\Payment\GetPaymentUseCase;
 use App\Application\UseCases\Payment\ListPaymentsUseCase;
-use App\Application\UseCases\Payment\DeletePaymentUseCase;
-use App\Application\UseCases\Payment\CalculateBalanceUseCase;
-use App\Application\DTOs\PaymentDTO;
+use App\Application\UseCases\Payment\UpdatePaymentUseCase;
+use App\Domain\Repositories\CollectionRepositoryInterface;
 use App\Domain\Repositories\PaymentRepositoryInterface;
 use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Domain\Repositories\CollectionRepositoryInterface;
 use App\Domain\Services\AuditServiceInterface;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
     private PaymentRepositoryInterface $paymentRepository;
+
     private SupplierRepositoryInterface $supplierRepository;
+
     private CollectionRepositoryInterface $collectionRepository;
+
     private AuditServiceInterface $auditService;
 
     public function __construct(
@@ -41,27 +44,27 @@ class PaymentController extends Controller
     {
         try {
             $useCase = new ListPaymentsUseCase($this->paymentRepository);
-            
+
             $filters = [
                 'supplier_id' => $request->get('supplier_id'),
                 'payment_type' => $request->get('payment_type'),
                 'from_date' => $request->get('from_date'),
                 'to_date' => $request->get('to_date'),
             ];
-            
-            $filters = array_filter($filters, fn($value) => $value !== null);
-            
+
+            $filters = array_filter($filters, fn ($value) => $value !== null);
+
             $result = $useCase->execute($filters, $request->get('page', 1), $request->get('per_page', 15));
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'items' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+                    'items' => array_map(fn ($entity) => $entity->toArray(), $result['data']),
                     'total' => $result['total'],
                     'current_page' => $result['page'],
                     'per_page' => $result['per_page'],
                     'last_page' => $result['last_page'],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to retrieve payments', 'error' => $e->getMessage()], 500);
@@ -109,9 +112,11 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Payment created successfully', 'data' => $payment->toArray()], 201);
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to create payment', 'error' => $e->getMessage()], 500);
         }
     }
@@ -121,6 +126,7 @@ class PaymentController extends Controller
         try {
             $useCase = new GetPaymentUseCase($this->paymentRepository);
             $payment = $useCase->execute($id);
+
             return response()->json(['success' => true, 'data' => $payment->toArray()]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
@@ -150,7 +156,7 @@ class PaymentController extends Controller
             DB::beginTransaction();
 
             $existing = $this->paymentRepository->findById($id);
-            if (!$existing) {
+            if (! $existing) {
                 return response()->json(['success' => false, 'message' => 'Payment not found'], 404);
             }
 
@@ -178,12 +184,15 @@ class PaymentController extends Controller
             return response()->json(['success' => true, 'message' => 'Payment updated successfully', 'data' => $payment->toArray()]);
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\RuntimeException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 409);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to update payment', 'error' => $e->getMessage()], 500);
         }
     }
@@ -212,7 +221,8 @@ class PaymentController extends Controller
     {
         try {
             $payments = $this->paymentRepository->findBySupplier($supplierId);
-            return response()->json(['success' => true, 'data' => array_map(fn($p) => $p->toArray(), $payments)]);
+
+            return response()->json(['success' => true, 'data' => array_map(fn ($p) => $p->toArray(), $payments)]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to retrieve payments', 'error' => $e->getMessage()], 500);
         }
@@ -232,7 +242,7 @@ class PaymentController extends Controller
 
         try {
             $supplier = $this->supplierRepository->findById($request->supplier_id);
-            if (!$supplier) {
+            if (! $supplier) {
                 return response()->json(['success' => false, 'message' => 'Supplier not found'], 404);
             }
 
@@ -252,7 +262,7 @@ class PaymentController extends Controller
                     'total_collections' => $balance['total_collections'],
                     'total_payments' => $balance['total_payments'],
                     'outstanding_balance' => $balance['outstanding_balance'],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to calculate balance', 'error' => $e->getMessage()], 500);

@@ -8,7 +8,7 @@ use App\Models\Collection;
 
 /**
  * Eloquent Collection Repository
- * 
+ *
  * Infrastructure implementation of the CollectionRepositoryInterface.
  * Bridges the domain layer with Laravel's Eloquent ORM.
  */
@@ -79,50 +79,50 @@ class EloquentCollectionRepository implements CollectionRepositoryInterface
     public function findById(int $id): ?CollectionEntity
     {
         $model = Collection::find($id);
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function findBySupplier(int $supplierId, ?\DateTimeInterface $fromDate = null, ?\DateTimeInterface $toDate = null): array
     {
         $query = Collection::where('supplier_id', $supplierId);
-        
+
         if ($fromDate !== null) {
             $query->where('collection_date', '>=', $fromDate->format('Y-m-d'));
         }
-        
+
         if ($toDate !== null) {
             $query->where('collection_date', '<=', $toDate->format('Y-m-d'));
         }
-        
+
         $models = $query->orderBy('collection_date', 'desc')->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function findByProduct(int $productId, ?\DateTimeInterface $fromDate = null, ?\DateTimeInterface $toDate = null): array
     {
         $query = Collection::where('product_id', $productId);
-        
+
         if ($fromDate !== null) {
             $query->where('collection_date', '>=', $fromDate->format('Y-m-d'));
         }
-        
+
         if ($toDate !== null) {
             $query->where('collection_date', '<=', $toDate->format('Y-m-d'));
         }
-        
+
         $models = $query->orderBy('collection_date', 'desc')->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function findByDate(\DateTimeInterface $date): array
     {
         $dateStr = $date->format('Y-m-d');
         $models = Collection::whereDate('collection_date', $dateStr)->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function list(array $filters = [], int $page = 1, int $perPage = 15): array
@@ -148,7 +148,7 @@ class EloquentCollectionRepository implements CollectionRepositoryInterface
         $paginator = $query->orderBy('collection_date', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $paginator->items() ? array_map(fn($model) => $this->toDomainEntity($model), $paginator->items()) : [],
+            'data' => $paginator->items() ? array_map(fn ($model) => $this->toDomainEntity($model), $paginator->items()) : [],
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
@@ -159,6 +159,7 @@ class EloquentCollectionRepository implements CollectionRepositoryInterface
     public function delete(int $id): bool
     {
         $model = Collection::findOrFail($id);
+
         return $model->delete();
     }
 
@@ -170,15 +171,15 @@ class EloquentCollectionRepository implements CollectionRepositoryInterface
     public function getTotalAmountBySupplier(int $supplierId, ?\DateTimeInterface $fromDate = null, ?\DateTimeInterface $toDate = null): float
     {
         $query = Collection::where('supplier_id', $supplierId);
-        
+
         if ($fromDate !== null) {
             $query->where('collection_date', '>=', $fromDate->format('Y-m-d'));
         }
-        
+
         if ($toDate !== null) {
             $query->where('collection_date', '<=', $toDate->format('Y-m-d'));
         }
-        
+
         return (float) $query->sum('total_amount');
     }
 }

@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Application\DTOs\ProductDTO;
+use App\Application\DTOs\ProductRateDTO;
 use App\Application\UseCases\Product\CreateProductUseCase;
-use App\Application\UseCases\Product\UpdateProductUseCase;
+use App\Application\UseCases\Product\DeleteProductUseCase;
 use App\Application\UseCases\Product\GetProductUseCase;
 use App\Application\UseCases\Product\ListProductsUseCase;
-use App\Application\UseCases\Product\DeleteProductUseCase;
+use App\Application\UseCases\Product\UpdateProductUseCase;
 use App\Application\UseCases\ProductRate\AddProductRateUseCase;
 use App\Application\UseCases\ProductRate\GetCurrentRateUseCase;
 use App\Application\UseCases\ProductRate\ListProductRatesUseCase;
-use App\Application\DTOs\ProductDTO;
-use App\Application\DTOs\ProductRateDTO;
-use App\Domain\Repositories\ProductRepositoryInterface;
 use App\Domain\Repositories\ProductRateRepositoryInterface;
+use App\Domain\Repositories\ProductRepositoryInterface;
 use App\Domain\Services\AuditServiceInterface;
+use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -23,7 +23,9 @@ use Illuminate\Support\Facades\Validator;
 class ProductController extends Controller
 {
     private ProductRepositoryInterface $repository;
+
     private ProductRateRepositoryInterface $rateRepository;
+
     private AuditServiceInterface $auditService;
 
     public function __construct(
@@ -43,35 +45,35 @@ class ProductController extends Controller
     {
         try {
             $useCase = new ListProductsUseCase($this->repository);
-            
+
             $filters = [
                 'status' => $request->get('status'),
                 'search' => $request->get('search'),
                 'base_unit' => $request->get('base_unit'),
             ];
-            
-            $filters = array_filter($filters, fn($value) => $value !== null);
-            
+
+            $filters = array_filter($filters, fn ($value) => $value !== null);
+
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 15);
-            
+
             $result = $useCase->execute($filters, $page, $perPage);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'items' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+                    'items' => array_map(fn ($entity) => $entity->toArray(), $result['data']),
                     'total' => $result['total'],
                     'current_page' => $result['page'],
                     'per_page' => $result['per_page'],
                     'last_page' => $result['last_page'],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve products',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -94,13 +96,13 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
-            $code = $request->code ?? 'PRD' . str_pad(Product::count() + 1, 6, '0', STR_PAD_LEFT);
-            
+            $code = $request->code ?? 'PRD'.str_pad(Product::count() + 1, 6, '0', STR_PAD_LEFT);
+
             $dto = ProductDTO::fromArray([
                 'name' => $request->name,
                 'code' => $code,
@@ -127,7 +129,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully',
-                'data' => $product->toArray()
+                'data' => $product->toArray(),
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -138,7 +140,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create product',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -154,7 +156,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $product->toArray()
+                'data' => $product->toArray(),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -165,7 +167,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve product',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -177,7 +179,7 @@ class ProductController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:products,code,' . $id,
+            'code' => 'nullable|string|max:50|unique:products,code,'.$id,
             'description' => 'nullable|string',
             'base_unit' => 'sometimes|required|string|max:20',
             'allowed_units' => 'nullable|array',
@@ -189,13 +191,13 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             $existingProduct = $this->repository->findById($id);
-            if (!$existingProduct) {
+            if (! $existingProduct) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Product not found',
@@ -230,7 +232,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully',
-                'data' => $product->toArray()
+                'data' => $product->toArray(),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -246,7 +248,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update product',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -276,7 +278,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product deleted successfully'
+                'message' => 'Product deleted successfully',
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -287,7 +289,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete product',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -303,13 +305,13 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => array_map(fn($rate) => $rate->toArray(), $rates)
+                'data' => array_map(fn ($rate) => $rate->toArray(), $rates),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve rates',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -332,7 +334,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -363,7 +365,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Rate added successfully',
-                'data' => $rate->toArray()
+                'data' => $rate->toArray(),
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -374,7 +376,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to add rate',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -386,32 +388,32 @@ class ProductController extends Controller
     {
         try {
             $product = $this->repository->findById($id);
-            if (!$product) {
+            if (! $product) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Product not found'
+                    'message' => 'Product not found',
                 ], 404);
             }
 
             $unit = request()->get('unit', $product->getBaseUnit());
-            
+
             $useCase = new GetCurrentRateUseCase($this->rateRepository, $this->repository);
             $rate = $useCase->execute($id, $unit);
 
             return response()->json([
                 'success' => true,
-                'data' => $rate->toArray()
+                'data' => $rate->toArray(),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve current rate',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -6,7 +6,7 @@ use App\Domain\Repositories\CollectionRepositoryInterface;
 
 /**
  * List Collections Use Case
- * 
+ *
  * Lists collections with optional filtering and pagination.
  */
 class ListCollectionsUseCase
@@ -21,9 +21,6 @@ class ListCollectionsUseCase
     /**
      * Execute the use case
      *
-     * @param array $filters
-     * @param int $page
-     * @param int $perPage
      * @return array ['data' => CollectionEntity[], 'total' => int, 'page' => int]
      */
     public function execute(array $filters = [], int $page = 1, int $perPage = 15): array

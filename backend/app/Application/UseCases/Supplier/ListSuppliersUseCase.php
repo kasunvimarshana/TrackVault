@@ -6,7 +6,7 @@ use App\Domain\Repositories\SupplierRepositoryInterface;
 
 /**
  * List Suppliers Use Case
- * 
+ *
  * Retrieves a list of suppliers with filtering and pagination.
  */
 class ListSuppliersUseCase
@@ -20,11 +20,6 @@ class ListSuppliersUseCase
 
     /**
      * Execute the use case
-     *
-     * @param array $filters
-     * @param int $page
-     * @param int $perPage
-     * @return array
      */
     public function execute(array $filters = [], int $page = 1, int $perPage = 15): array
     {

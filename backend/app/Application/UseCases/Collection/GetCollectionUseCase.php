@@ -7,7 +7,7 @@ use App\Domain\Repositories\CollectionRepositoryInterface;
 
 /**
  * Get Collection Use Case
- * 
+ *
  * Retrieves a single collection by ID.
  */
 class GetCollectionUseCase
@@ -22,8 +22,6 @@ class GetCollectionUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return CollectionEntity
      * @throws \InvalidArgumentException
      */
     public function execute(int $id): CollectionEntity

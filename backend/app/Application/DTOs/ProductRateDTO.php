@@ -4,20 +4,28 @@ namespace App\Application\DTOs;
 
 /**
  * ProductRate Data Transfer Object
- * 
+ *
  * Used to transfer product rate data between layers.
  * Implements immutability and validation at the application layer.
  */
 class ProductRateDTO
 {
     public readonly int $productId;
+
     public readonly float $rate;
+
     public readonly string $unit;
+
     public readonly string $effectiveFrom;
+
     public readonly ?string $effectiveTo;
+
     public readonly bool $isActive;
+
     public readonly ?string $notes;
+
     public readonly ?int $id;
+
     public readonly int $version;
 
     public function __construct(

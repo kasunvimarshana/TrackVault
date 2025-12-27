@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Product;
 
+use App\Application\DTOs\ProductDTO;
 use App\Domain\Entities\ProductEntity;
 use App\Domain\Repositories\ProductRepositoryInterface;
-use App\Application\DTOs\ProductDTO;
 
 /**
  * Update Product Use Case
- * 
+ *
  * Encapsulates the business logic for updating a product with version control.
  * This follows Single Responsibility Principle (SOLID).
  */
@@ -24,9 +24,6 @@ class UpdateProductUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @param ProductDTO $dto
-     * @return ProductEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
@@ -41,14 +38,14 @@ class UpdateProductUseCase
         // Optimistic locking: Check version conflict
         if ($existingProduct->getVersion() !== $dto->version) {
             throw new \RuntimeException(
-                "Version conflict: Product has been modified by another user. " .
+                'Version conflict: Product has been modified by another user. '.
                 "Expected version {$dto->version}, but current version is {$existingProduct->getVersion()}"
             );
         }
 
         // Business rule: Code must be unique (excluding current product)
         if ($dto->code !== $existingProduct->getCode()) {
-            if (!$this->repository->isCodeUnique($dto->code, $id)) {
+            if (! $this->repository->isCodeUnique($dto->code, $id)) {
                 throw new \InvalidArgumentException("Product code '{$dto->code}' already exists");
             }
         }
@@ -71,7 +68,7 @@ class UpdateProductUseCase
         try {
             return $this->repository->save($product);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update product: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to update product: '.$e->getMessage(), 0, $e);
         }
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 /**
  * Sync Controller
- * 
+ *
  * Handles synchronization requests from mobile devices.
  * Supports offline-first architecture with conflict resolution.
  */
@@ -25,7 +25,6 @@ class SyncController extends Controller
     /**
      * Sync data from mobile device to server
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function sync(Request $request)
@@ -43,7 +42,7 @@ class SyncController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -53,20 +52,20 @@ class SyncController extends Controller
 
             // Sync suppliers
             $results = [];
-            if (!empty($suppliers)) {
+            if (! empty($suppliers)) {
                 $results['suppliers'] = $this->syncService->syncSuppliers($suppliers, $userId);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Sync completed',
-                'data' => $results
+                'data' => $results,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Sync failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -74,7 +73,6 @@ class SyncController extends Controller
     /**
      * Get changes since last sync
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function getChanges(Request $request)
@@ -87,7 +85,7 @@ class SyncController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -99,13 +97,13 @@ class SyncController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $changes
+                'data' => $changes,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get changes',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -113,7 +111,6 @@ class SyncController extends Controller
     /**
      * Resolve a sync conflict
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function resolveConflict(Request $request)
@@ -129,7 +126,7 @@ class SyncController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -147,19 +144,19 @@ class SyncController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Conflict resolved',
-                    'data' => $result
+                    'data' => $result,
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Entity type not yet supported for conflict resolution'
+                'message' => 'Entity type not yet supported for conflict resolution',
             ], 400);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to resolve conflict',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -177,13 +174,13 @@ class SyncController extends Controller
                 'data' => [
                     'server_time' => now()->toISOString(),
                     'status' => 'online',
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get status',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

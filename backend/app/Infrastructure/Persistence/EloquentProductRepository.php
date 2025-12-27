@@ -5,11 +5,10 @@ namespace App\Infrastructure\Persistence;
 use App\Domain\Entities\ProductEntity;
 use App\Domain\Repositories\ProductRepositoryInterface;
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Eloquent Product Repository
- * 
+ *
  * Infrastructure implementation of the ProductRepositoryInterface.
  * Bridges the domain layer with Laravel's Eloquent ORM.
  */
@@ -71,14 +70,14 @@ class EloquentProductRepository implements ProductRepositoryInterface
     public function findById(int $id): ?ProductEntity
     {
         $model = Product::find($id);
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function findByCode(string $code): ?ProductEntity
     {
         $model = Product::where('code', $code)->first();
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
@@ -95,8 +94,8 @@ class EloquentProductRepository implements ProductRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -107,7 +106,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
         $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $paginator->items() ? array_map(fn($model) => $this->toDomainEntity($model), $paginator->items()) : [],
+            'data' => $paginator->items() ? array_map(fn ($model) => $this->toDomainEntity($model), $paginator->items()) : [],
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
@@ -118,18 +117,19 @@ class EloquentProductRepository implements ProductRepositoryInterface
     public function delete(int $id): bool
     {
         $model = Product::findOrFail($id);
+
         return $model->delete();
     }
 
     public function isCodeUnique(string $code, ?int $excludeId = null): bool
     {
         $query = Product::where('code', $code);
-        
+
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);
         }
-        
-        return !$query->exists();
+
+        return ! $query->exists();
     }
 
     public function exists(int $id): bool
@@ -140,7 +140,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
     public function getActive(): array
     {
         $models = Product::where('status', 'active')->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 }

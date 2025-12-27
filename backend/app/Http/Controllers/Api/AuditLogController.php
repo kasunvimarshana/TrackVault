@@ -49,7 +49,7 @@ class AuditLogController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $logs
+            'data' => $logs,
         ]);
     }
 
@@ -60,7 +60,7 @@ class AuditLogController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $auditLog->load('user')
+            'data' => $auditLog->load('user'),
         ]);
     }
 }

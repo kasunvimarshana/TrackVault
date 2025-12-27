@@ -8,12 +8,13 @@ use App\Domain\Repositories\ProductRepositoryInterface;
 
 /**
  * Get Current Product Rate Use Case
- * 
+ *
  * Retrieves the currently effective rate for a product, unit, and date.
  */
 class GetCurrentRateUseCase
 {
     private ProductRateRepositoryInterface $rateRepository;
+
     private ProductRepositoryInterface $productRepository;
 
     public function __construct(
@@ -27,20 +28,16 @@ class GetCurrentRateUseCase
     /**
      * Execute the use case
      *
-     * @param int $productId
-     * @param string $unit
-     * @param \DateTimeInterface|null $date
-     * @return ProductRateEntity
      * @throws \InvalidArgumentException
      */
     public function execute(int $productId, string $unit, ?\DateTimeInterface $date = null): ProductRateEntity
     {
         // Verify product exists
-        if (!$this->productRepository->exists($productId)) {
+        if (! $this->productRepository->exists($productId)) {
             throw new \InvalidArgumentException("Product with ID {$productId} not found");
         }
 
-        $date = $date ?? new \DateTime();
+        $date = $date ?? new \DateTime;
         $rate = $this->rateRepository->getCurrentRate($productId, $date, $unit);
 
         if ($rate === null) {

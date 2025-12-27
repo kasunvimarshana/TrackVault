@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProductRate extends Model
 {
@@ -53,7 +53,8 @@ class ProductRate extends Model
     public function isCurrentlyActive(): bool
     {
         $today = now()->toDateString();
-        return $this->is_active 
+
+        return $this->is_active
             && $this->effective_from <= $today
             && ($this->effective_to === null || $this->effective_to >= $today);
     }

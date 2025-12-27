@@ -4,14 +4,14 @@ namespace App\Infrastructure\Persistence;
 
 use App\Domain\Entities\SupplierEntity;
 use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Models\Supplier;
 use App\Models\Collection;
 use App\Models\Payment;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Eloquent Supplier Repository
- * 
+ *
  * Infrastructure implementation of the SupplierRepositoryInterface.
  * Bridges the domain layer with Laravel's Eloquent ORM.
  * This follows the Repository Pattern and Dependency Inversion Principle.
@@ -66,14 +66,14 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
     public function findById(int $id): ?SupplierEntity
     {
         $model = Supplier::find($id);
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function findByCode(string $code): ?SupplierEntity
     {
         $model = Supplier::where('code', $code)->first();
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
@@ -90,8 +90,8 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('contact_person', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('contact_person', 'like', "%{$search}%");
             });
         }
 
@@ -99,7 +99,7 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
 
         return [
             'data' => array_map(
-                fn($model) => $this->toDomainEntity($model),
+                fn ($model) => $this->toDomainEntity($model),
                 $paginator->items()
             ),
             'total' => $paginator->total(),
@@ -112,7 +112,7 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
     public function save(SupplierEntity $entity): SupplierEntity
     {
         $attributes = $this->toModelAttributes($entity);
-        
+
         if ($entity->getId() === null) {
             // Create new
             $model = Supplier::create($attributes);
@@ -129,6 +129,7 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
     public function delete(int $id): bool
     {
         $model = Supplier::findOrFail($id);
+
         return $model->delete();
     }
 
@@ -140,12 +141,12 @@ class EloquentSupplierRepository implements SupplierRepositoryInterface
     public function isCodeUnique(string $code, ?int $excludeId = null): bool
     {
         $query = Supplier::where('code', $code);
-        
+
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     public function getBalance(int $id): array

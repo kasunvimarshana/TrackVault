@@ -7,7 +7,7 @@ use App\Domain\Repositories\SupplierRepositoryInterface;
 
 /**
  * Get Supplier Use Case
- * 
+ *
  * Retrieves a single supplier by ID.
  */
 class GetSupplierUseCase
@@ -22,14 +22,12 @@ class GetSupplierUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return SupplierEntity
      * @throws \InvalidArgumentException
      */
     public function execute(int $id): SupplierEntity
     {
         $supplier = $this->repository->findById($id);
-        
+
         if ($supplier === null) {
             throw new \InvalidArgumentException("Supplier with ID {$id} not found");
         }

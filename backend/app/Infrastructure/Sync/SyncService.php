@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Sync Service
- * 
+ *
  * Handles synchronization of offline data from mobile devices.
  * Implements conflict detection and resolution strategies.
  * Ensures data integrity across multiple users and devices.
@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 class SyncService
 {
     private SupplierRepositoryInterface $supplierRepository;
+
     private AuditServiceInterface $auditService;
 
     public function __construct(
@@ -31,8 +32,8 @@ class SyncService
     /**
      * Sync suppliers from mobile device
      *
-     * @param array $suppliers Array of supplier data from mobile device
-     * @param int $userId User ID performing the sync
+     * @param  array  $suppliers  Array of supplier data from mobile device
+     * @param  int  $userId  User ID performing the sync
      * @return array Sync result with conflicts and successes
      */
     public function syncSuppliers(array $suppliers, int $userId): array
@@ -44,11 +45,11 @@ class SyncService
         ];
 
         DB::beginTransaction();
-        
+
         try {
             foreach ($suppliers as $supplierData) {
                 $result = $this->syncSingleSupplier($supplierData, $userId);
-                
+
                 if ($result['status'] === 'success') {
                     $results['success'][] = $result;
                 } elseif ($result['status'] === 'conflict') {
@@ -59,7 +60,7 @@ class SyncService
             }
 
             DB::commit();
-            
+
             Log::info('Sync completed', [
                 'user_id' => $userId,
                 'success_count' => count($results['success']),
@@ -70,21 +71,21 @@ class SyncService
             return $results;
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Sync failed', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
 
-            throw new \RuntimeException('Sync operation failed: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Sync operation failed: '.$e->getMessage(), 0, $e);
         }
     }
 
     /**
      * Sync a single supplier with conflict detection
      *
-     * @param array $data Supplier data from mobile device
-     * @param int $userId User ID
+     * @param  array  $data  Supplier data from mobile device
+     * @param  int  $userId  User ID
      * @return array Sync result
      */
     private function syncSingleSupplier(array $data, int $userId): array
@@ -119,8 +120,8 @@ class SyncService
     private function createNewSupplier(array $data, ?string $localId, int $userId): array
     {
         // Generate unique code using timestamp and random component to avoid race conditions
-        $code = $data['code'] ?? 'SUP' . time() . rand(1000, 9999);
-        
+        $code = $data['code'] ?? 'SUP'.time().rand(1000, 9999);
+
         // Create domain entity
         $entity = new \App\Domain\Entities\SupplierEntity(
             name: $data['name'],
@@ -205,7 +206,7 @@ class SyncService
             version: $serverVersion + 1,
             id: $serverId,
             createdAt: $entity->getCreatedAt(),
-            updatedAt: new \DateTime()
+            updatedAt: new \DateTime
         );
 
         $savedEntity = $this->supplierRepository->save($updatedEntity);
@@ -233,10 +234,10 @@ class SyncService
     /**
      * Resolve sync conflict using specified strategy
      *
-     * @param int $serverId Supplier ID
-     * @param array $clientData Client data
-     * @param string $strategy Resolution strategy (server_wins, client_wins, merge)
-     * @param int $userId User ID
+     * @param  int  $serverId  Supplier ID
+     * @param  array  $clientData  Client data
+     * @param  string  $strategy  Resolution strategy (server_wins, client_wins, merge)
+     * @param  int  $userId  User ID
      * @return array Resolution result
      */
     public function resolveConflict(int $serverId, array $clientData, string $strategy, int $userId): array
@@ -273,7 +274,7 @@ class SyncService
                     version: $entity->getVersion() + 1,
                     id: $serverId,
                     createdAt: $entity->getCreatedAt(),
-                    updatedAt: new \DateTime()
+                    updatedAt: new \DateTime
                 );
 
                 $savedEntity = $this->supplierRepository->save($updatedEntity);
@@ -298,7 +299,7 @@ class SyncService
             case 'merge':
                 // Intelligent merge - preserve non-conflicting changes
                 $mergedData = $this->mergeData($entity->toArray(), $clientData);
-                
+
                 $mergedEntity = new \App\Domain\Entities\SupplierEntity(
                     name: $mergedData['name'],
                     code: $mergedData['code'],
@@ -314,7 +315,7 @@ class SyncService
                     version: $entity->getVersion() + 1,
                     id: $serverId,
                     createdAt: $entity->getCreatedAt(),
-                    updatedAt: new \DateTime()
+                    updatedAt: new \DateTime
                 );
 
                 $savedEntity = $this->supplierRepository->save($mergedEntity);
@@ -356,8 +357,8 @@ class SyncService
     /**
      * Get changes since last sync for a user
      *
-     * @param int $userId User ID
-     * @param string|null $lastSyncedAt ISO 8601 timestamp of last sync
+     * @param  int  $userId  User ID
+     * @param  string|null  $lastSyncedAt  ISO 8601 timestamp of last sync
      * @return array Changes since last sync
      */
     public function getChangesSinceLastSync(int $userId, ?string $lastSyncedAt): array
@@ -369,7 +370,7 @@ class SyncService
         $result = $this->supplierRepository->getAll($filters, 1, 1000);
 
         return [
-            'suppliers' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+            'suppliers' => array_map(fn ($entity) => $entity->toArray(), $result['data']),
             'sync_timestamp' => now()->toISOString(),
         ];
     }

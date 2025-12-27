@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Supplier;
 
+use App\Application\DTOs\SupplierDTO;
 use App\Domain\Entities\SupplierEntity;
 use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Application\DTOs\SupplierDTO;
 
 /**
  * Update Supplier Use Case
- * 
+ *
  * Handles the business logic for updating an existing supplier.
  */
 class UpdateSupplierUseCase
@@ -23,9 +23,6 @@ class UpdateSupplierUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @param SupplierDTO $dto
-     * @return SupplierEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
@@ -33,14 +30,14 @@ class UpdateSupplierUseCase
     {
         // Find existing supplier
         $supplier = $this->repository->findById($id);
-        
+
         if ($supplier === null) {
             throw new \InvalidArgumentException("Supplier with ID {$id} not found");
         }
 
         // Check code uniqueness if code is being changed
         if ($supplier->getCode() !== $dto->code) {
-            if (!$this->repository->isCodeUnique($dto->code, $id)) {
+            if (! $this->repository->isCodeUnique($dto->code, $id)) {
                 throw new \InvalidArgumentException("Supplier code '{$dto->code}' already exists");
             }
         }
@@ -66,14 +63,14 @@ class UpdateSupplierUseCase
             version: $supplier->getVersion() + 1,
             id: $id,
             createdAt: $supplier->getCreatedAt(),
-            updatedAt: new \DateTime()
+            updatedAt: new \DateTime
         );
 
         // Persist the updated entity
         try {
             return $this->repository->save($updatedSupplier);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update supplier: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to update supplier: '.$e->getMessage(), 0, $e);
         }
     }
 }

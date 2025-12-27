@@ -8,7 +8,7 @@ use App\Models\ProductRate;
 
 /**
  * Eloquent ProductRate Repository
- * 
+ *
  * Infrastructure implementation of the ProductRateRepositoryInterface.
  * Bridges the domain layer with Laravel's Eloquent ORM.
  */
@@ -70,27 +70,27 @@ class EloquentProductRateRepository implements ProductRateRepositoryInterface
     public function findById(int $id): ?ProductRateEntity
     {
         $model = ProductRate::find($id);
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function findByProduct(int $productId, bool $activeOnly = false): array
     {
         $query = ProductRate::where('product_id', $productId);
-        
+
         if ($activeOnly) {
             $query->where('is_active', true);
         }
-        
+
         $models = $query->orderBy('effective_from', 'desc')->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function getCurrentRate(int $productId, \DateTimeInterface $date, string $unit): ?ProductRateEntity
     {
         $dateStr = $date->format('Y-m-d');
-        
+
         $model = ProductRate::where('product_id', $productId)
             ->where('unit', $unit)
             ->where('is_active', true)
@@ -101,7 +101,7 @@ class EloquentProductRateRepository implements ProductRateRepositoryInterface
             })
             ->orderBy('effective_from', 'desc')
             ->first();
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
@@ -124,7 +124,7 @@ class EloquentProductRateRepository implements ProductRateRepositoryInterface
         $paginator = $query->orderBy('effective_from', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $paginator->items() ? array_map(fn($model) => $this->toDomainEntity($model), $paginator->items()) : [],
+            'data' => $paginator->items() ? array_map(fn ($model) => $this->toDomainEntity($model), $paginator->items()) : [],
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
@@ -135,6 +135,7 @@ class EloquentProductRateRepository implements ProductRateRepositoryInterface
     public function delete(int $id): bool
     {
         $model = ProductRate::findOrFail($id);
+
         return $model->delete();
     }
 

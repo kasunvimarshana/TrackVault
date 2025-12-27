@@ -6,7 +6,7 @@ use App\Domain\Repositories\ProductRepositoryInterface;
 
 /**
  * List Products Use Case
- * 
+ *
  * Lists products with optional filtering and pagination.
  */
 class ListProductsUseCase
@@ -21,9 +21,6 @@ class ListProductsUseCase
     /**
      * Execute the use case
      *
-     * @param array $filters
-     * @param int $page
-     * @param int $perPage
      * @return array ['data' => ProductEntity[], 'total' => int, 'page' => int]
      */
     public function execute(array $filters = [], int $page = 1, int $perPage = 15): array

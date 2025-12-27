@@ -8,7 +8,7 @@ use App\Models\Payment;
 
 /**
  * Eloquent Payment Repository
- * 
+ *
  * Infrastructure implementation of the PaymentRepositoryInterface.
  * Bridges the domain layer with Laravel's Eloquent ORM.
  */
@@ -74,32 +74,32 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function findById(int $id): ?PaymentEntity
     {
         $model = Payment::find($id);
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 
     public function findBySupplier(int $supplierId, ?\DateTimeInterface $fromDate = null, ?\DateTimeInterface $toDate = null): array
     {
         $query = Payment::where('supplier_id', $supplierId);
-        
+
         if ($fromDate !== null) {
             $query->where('payment_date', '>=', $fromDate->format('Y-m-d'));
         }
-        
+
         if ($toDate !== null) {
             $query->where('payment_date', '<=', $toDate->format('Y-m-d'));
         }
-        
+
         $models = $query->orderBy('payment_date', 'desc')->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function findByType(string $paymentType): array
     {
         $models = Payment::where('payment_type', $paymentType)->get();
-        
-        return $models->map(fn($model) => $this->toDomainEntity($model))->all();
+
+        return $models->map(fn ($model) => $this->toDomainEntity($model))->all();
     }
 
     public function list(array $filters = [], int $page = 1, int $perPage = 15): array
@@ -125,7 +125,7 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
         $paginator = $query->orderBy('payment_date', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $paginator->items() ? array_map(fn($model) => $this->toDomainEntity($model), $paginator->items()) : [],
+            'data' => $paginator->items() ? array_map(fn ($model) => $this->toDomainEntity($model), $paginator->items()) : [],
             'total' => $paginator->total(),
             'page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
@@ -136,6 +136,7 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function delete(int $id): bool
     {
         $model = Payment::findOrFail($id);
+
         return $model->delete();
     }
 
@@ -147,22 +148,22 @@ class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function getTotalAmountBySupplier(int $supplierId, ?\DateTimeInterface $fromDate = null, ?\DateTimeInterface $toDate = null): float
     {
         $query = Payment::where('supplier_id', $supplierId);
-        
+
         if ($fromDate !== null) {
             $query->where('payment_date', '>=', $fromDate->format('Y-m-d'));
         }
-        
+
         if ($toDate !== null) {
             $query->where('payment_date', '<=', $toDate->format('Y-m-d'));
         }
-        
+
         return (float) $query->sum('amount');
     }
 
     public function findByReferenceNumber(string $referenceNumber): ?PaymentEntity
     {
         $model = Payment::where('reference_number', $referenceNumber)->first();
-        
+
         return $model ? $this->toDomainEntity($model) : null;
     }
 }

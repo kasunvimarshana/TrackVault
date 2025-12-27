@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Product;
 
+use App\Application\DTOs\ProductDTO;
 use App\Domain\Entities\ProductEntity;
 use App\Domain\Repositories\ProductRepositoryInterface;
-use App\Application\DTOs\ProductDTO;
 
 /**
  * Create Product Use Case
- * 
+ *
  * Encapsulates the business logic for creating a new product.
  * This follows Single Responsibility Principle (SOLID).
  */
@@ -24,15 +24,13 @@ class CreateProductUseCase
     /**
      * Execute the use case
      *
-     * @param ProductDTO $dto
-     * @return ProductEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(ProductDTO $dto): ProductEntity
     {
         // Business rule: Code must be unique
-        if (!$this->repository->isCodeUnique($dto->code)) {
+        if (! $this->repository->isCodeUnique($dto->code)) {
             throw new \InvalidArgumentException("Product code '{$dto->code}' already exists");
         }
 
@@ -51,7 +49,7 @@ class CreateProductUseCase
         try {
             return $this->repository->save($product);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to create product: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to create product: '.$e->getMessage(), 0, $e);
         }
     }
 }

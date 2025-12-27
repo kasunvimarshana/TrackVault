@@ -4,22 +4,32 @@ namespace App\Domain\Entities;
 
 /**
  * ProductRate Domain Entity
- * 
+ *
  * Represents a time-based rate for a product.
  * This is a pure domain object with business logic and no framework dependencies.
  */
 class ProductRateEntity
 {
     private ?int $id;
+
     private int $productId;
+
     private float $rate;
+
     private string $unit;
+
     private \DateTimeInterface $effectiveFrom;
+
     private ?\DateTimeInterface $effectiveTo;
+
     private bool $isActive;
+
     private ?string $notes;
+
     private int $version;
+
     private ?\DateTimeInterface $createdAt;
+
     private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
@@ -53,17 +63,60 @@ class ProductRateEntity
     }
 
     // Getters
-    public function getId(): ?int { return $this->id; }
-    public function getProductId(): int { return $this->productId; }
-    public function getRate(): float { return $this->rate; }
-    public function getUnit(): string { return $this->unit; }
-    public function getEffectiveFrom(): \DateTimeInterface { return $this->effectiveFrom; }
-    public function getEffectiveTo(): ?\DateTimeInterface { return $this->effectiveTo; }
-    public function isActive(): bool { return $this->isActive; }
-    public function getNotes(): ?string { return $this->notes; }
-    public function getVersion(): int { return $this->version; }
-    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
-    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getProductId(): int
+    {
+        return $this->productId;
+    }
+
+    public function getRate(): float
+    {
+        return $this->rate;
+    }
+
+    public function getUnit(): string
+    {
+        return $this->unit;
+    }
+
+    public function getEffectiveFrom(): \DateTimeInterface
+    {
+        return $this->effectiveFrom;
+    }
+
+    public function getEffectiveTo(): ?\DateTimeInterface
+    {
+        return $this->effectiveTo;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
 
     // Business methods
     public function isEffectiveOn(\DateTimeInterface $date): bool
@@ -79,7 +132,7 @@ class ProductRateEntity
 
     public function isCurrentlyEffective(): bool
     {
-        return $this->isEffectiveOn(new \DateTime());
+        return $this->isEffectiveOn(new \DateTime);
     }
 
     public function activate(): void
@@ -124,8 +177,8 @@ class ProductRateEntity
     private function validateUnit(string $unit): void
     {
         $validUnits = ['kg', 'g', 'l', 'ml', 'unit', 'lb', 'oz', 't'];
-        if (!in_array($unit, $validUnits)) {
-            throw new \InvalidArgumentException('Invalid unit. Must be one of: ' . implode(', ', $validUnits));
+        if (! in_array($unit, $validUnits)) {
+            throw new \InvalidArgumentException('Invalid unit. Must be one of: '.implode(', ', $validUnits));
         }
     }
 
