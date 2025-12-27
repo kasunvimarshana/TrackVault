@@ -72,4 +72,32 @@ class Supplier extends Model
     {
         return $this->totalCollections() - $this->totalPayments();
     }
+
+    /**
+     * Calculate balance with optional date range.
+     */
+    public function calculateBalance($fromDate = null, $toDate = null)
+    {
+        $collectionsQuery = $this->collections();
+        $paymentsQuery = $this->payments();
+
+        if ($fromDate) {
+            $collectionsQuery->where('collection_date', '>=', $fromDate);
+            $paymentsQuery->where('payment_date', '>=', $fromDate);
+        }
+
+        if ($toDate) {
+            $collectionsQuery->where('collection_date', '<=', $toDate);
+            $paymentsQuery->where('payment_date', '<=', $toDate);
+        }
+
+        $totalCollections = $collectionsQuery->sum('total_amount');
+        $totalPayments = $paymentsQuery->sum('amount');
+
+        return [
+            'total_collections' => $totalCollections,
+            'total_payments' => $totalPayments,
+            'outstanding_balance' => $totalCollections - $totalPayments,
+        ];
+    }
 }
