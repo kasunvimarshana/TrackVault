@@ -6,7 +6,7 @@ use App\Domain\Repositories\SupplierRepositoryInterface;
 
 /**
  * Delete Supplier Use Case
- * 
+ *
  * Handles the deletion of a supplier.
  */
 class DeleteSupplierUseCase
@@ -21,21 +21,19 @@ class DeleteSupplierUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return bool
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(int $id): bool
     {
-        if (!$this->repository->exists($id)) {
+        if (! $this->repository->exists($id)) {
             throw new \InvalidArgumentException("Supplier with ID {$id} not found");
         }
 
         try {
             return $this->repository->delete($id);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to delete supplier: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to delete supplier: '.$e->getMessage(), 0, $e);
         }
     }
 }

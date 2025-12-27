@@ -7,7 +7,7 @@ use App\Models\AuditLog;
 
 /**
  * Eloquent Audit Service
- * 
+ *
  * Infrastructure implementation of audit logging using Laravel's Eloquent.
  * Bridges domain interface with framework-specific implementation.
  */

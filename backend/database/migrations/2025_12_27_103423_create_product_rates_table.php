@@ -23,7 +23,7 @@ return new class extends Migration
             $table->integer('version')->default(1);
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['product_id', 'effective_from', 'effective_to']);
             $table->index('is_active');
         });

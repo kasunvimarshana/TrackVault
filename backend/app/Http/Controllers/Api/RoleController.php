@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
-use App\Models\Permission;
 use App\Models\AuditLog;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -23,7 +22,7 @@ class RoleController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $roles
+            'data' => $roles,
         ]);
     }
 
@@ -41,7 +40,7 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -55,7 +54,7 @@ class RoleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Role created successfully',
-            'data' => $role
+            'data' => $role,
         ], 201);
     }
 
@@ -66,7 +65,7 @@ class RoleController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $role->load('permissions')
+            'data' => $role->load('permissions'),
         ]);
     }
 
@@ -76,7 +75,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255|unique:roles,name,' . $role->id,
+            'name' => 'sometimes|required|string|max:255|unique:roles,name,'.$role->id,
             'description' => 'nullable|string',
         ]);
 
@@ -84,12 +83,12 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $oldData = $role->toArray();
-        
+
         $role->update($request->only(['name', 'description']));
 
         AuditLog::log('update', 'Role', $role->id, $oldData, $role->toArray(), 'Role updated', auth()->id());
@@ -97,7 +96,7 @@ class RoleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Role updated successfully',
-            'data' => $role
+            'data' => $role,
         ]);
     }
 
@@ -107,14 +106,14 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $oldData = $role->toArray();
-        
+
         $role->delete();
 
         AuditLog::log('delete', 'Role', $role->id, $oldData, null, 'Role deleted', auth()->id());
 
         return response()->json([
             'success' => true,
-            'message' => 'Role deleted successfully'
+            'message' => 'Role deleted successfully',
         ]);
     }
 
@@ -132,25 +131,25 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $oldPermissions = $role->permissions->pluck('id')->toArray();
-        
+
         $role->permissions()->sync($request->permission_ids);
 
-        AuditLog::log('assign_permissions', 'Role', $role->id, 
-            ['permissions' => $oldPermissions], 
-            ['permissions' => $request->permission_ids], 
-            'Permissions assigned to role', 
+        AuditLog::log('assign_permissions', 'Role', $role->id,
+            ['permissions' => $oldPermissions],
+            ['permissions' => $request->permission_ids],
+            'Permissions assigned to role',
             auth()->id()
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Permissions assigned successfully',
-            'data' => $role->load('permissions')
+            'data' => $role->load('permissions'),
         ]);
     }
 }

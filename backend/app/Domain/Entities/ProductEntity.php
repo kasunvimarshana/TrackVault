@@ -4,22 +4,32 @@ namespace App\Domain\Entities;
 
 /**
  * Product Domain Entity
- * 
+ *
  * Represents the core business concept of a Product.
  * This is a pure domain object with business logic and no framework dependencies.
  */
 class ProductEntity
 {
     private ?int $id;
+
     private string $name;
+
     private string $code;
+
     private ?string $description;
+
     private string $baseUnit;
+
     private array $allowedUnits;
+
     private string $status;
+
     private array $metadata;
+
     private int $version;
+
     private ?\DateTimeInterface $createdAt;
+
     private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
@@ -54,17 +64,60 @@ class ProductEntity
     }
 
     // Getters
-    public function getId(): ?int { return $this->id; }
-    public function getName(): string { return $this->name; }
-    public function getCode(): string { return $this->code; }
-    public function getDescription(): ?string { return $this->description; }
-    public function getBaseUnit(): string { return $this->baseUnit; }
-    public function getAllowedUnits(): array { return $this->allowedUnits; }
-    public function getStatus(): string { return $this->status; }
-    public function getMetadata(): array { return $this->metadata; }
-    public function getVersion(): int { return $this->version; }
-    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
-    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function getBaseUnit(): string
+    {
+        return $this->baseUnit;
+    }
+
+    public function getAllowedUnits(): array
+    {
+        return $this->allowedUnits;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
 
     // Business methods
     public function isActive(): bool
@@ -92,8 +145,8 @@ class ProductEntity
     public function addAllowedUnit(string $unit): void
     {
         $this->validateUnit($unit);
-        
-        if (!in_array($unit, $this->allowedUnits)) {
+
+        if (! in_array($unit, $this->allowedUnits)) {
             $this->allowedUnits[] = $unit;
             $this->incrementVersion();
         }
@@ -110,7 +163,7 @@ class ProductEntity
         if ($description !== null) {
             $this->description = $description;
         }
-        
+
         $this->incrementVersion();
     }
 
@@ -131,7 +184,7 @@ class ProductEntity
         if (empty(trim($name))) {
             throw new \InvalidArgumentException('Product name cannot be empty');
         }
-        
+
         if (strlen($name) > 255) {
             throw new \InvalidArgumentException('Product name cannot exceed 255 characters');
         }
@@ -142,7 +195,7 @@ class ProductEntity
         if (empty(trim($code))) {
             throw new \InvalidArgumentException('Product code cannot be empty');
         }
-        
+
         if (strlen($code) > 50) {
             throw new \InvalidArgumentException('Product code cannot exceed 50 characters');
         }
@@ -151,16 +204,16 @@ class ProductEntity
     private function validateStatus(string $status): void
     {
         $validStatuses = ['active', 'inactive'];
-        if (!in_array($status, $validStatuses)) {
-            throw new \InvalidArgumentException('Invalid status. Must be one of: ' . implode(', ', $validStatuses));
+        if (! in_array($status, $validStatuses)) {
+            throw new \InvalidArgumentException('Invalid status. Must be one of: '.implode(', ', $validStatuses));
         }
     }
 
     private function validateUnit(string $unit): void
     {
         $validUnits = ['kg', 'g', 'l', 'ml', 'unit', 'lb', 'oz', 't'];
-        if (!in_array($unit, $validUnits)) {
-            throw new \InvalidArgumentException('Invalid unit. Must be one of: ' . implode(', ', $validUnits));
+        if (! in_array($unit, $validUnits)) {
+            throw new \InvalidArgumentException('Invalid unit. Must be one of: '.implode(', ', $validUnits));
         }
     }
 

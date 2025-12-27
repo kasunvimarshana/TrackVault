@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Supplier;
-use App\Models\Product;
 use App\Models\Collection;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -51,7 +50,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $stats
+            'data' => $stats,
         ]);
     }
 
@@ -61,7 +60,7 @@ class DashboardController extends Controller
     public function recentCollections(Request $request)
     {
         $limit = $request->get('limit', 10);
-        
+
         $collections = Collection::with(['supplier', 'product', 'collector'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)
@@ -69,7 +68,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $collections
+            'data' => $collections,
         ]);
     }
 
@@ -79,7 +78,7 @@ class DashboardController extends Controller
     public function recentPayments(Request $request)
     {
         $limit = $request->get('limit', 10);
-        
+
         $payments = Payment::with(['supplier', 'payer'])
             ->orderBy('created_at', 'desc')
             ->limit($limit)
@@ -87,7 +86,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $payments
+            'data' => $payments,
         ]);
     }
 }

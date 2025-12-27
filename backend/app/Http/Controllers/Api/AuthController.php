@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,7 +27,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -43,7 +42,7 @@ class AuthController extends Controller
         // Create audit log
         AuditLog::log('register', 'User', $user->id, null, $user->toArray(), 'User registered');
 
-        $token = auth()->login($user);
+        $token = auth('api')->login($user);
 
         return response()->json([
             'success' => true,
@@ -52,8 +51,8 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => auth()->factory()->getTTL() * 60
-            ]
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ],
         ], 201);
     }
 
@@ -71,21 +70,21 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $credentials = $request->only('email', 'password');
 
-        if (!$token = auth()->attempt($credentials)) {
+        if (! $token = auth('api')->attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
-        $user = auth()->user();
-        
+        $user = auth('api')->user();
+
         // Update last login
         $user->update([
             'last_login_at' => now(),
@@ -102,8 +101,8 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => auth()->factory()->getTTL() * 60
-            ]
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ],
         ]);
     }
 
@@ -112,16 +111,16 @@ class AuthController extends Controller
      */
     public function me()
     {
-        $user = auth()->user();
+        $user = auth('api')->user();
         $user->load('roles.permissions');
-        
+
         return response()->json([
             'success' => true,
             'data' => [
                 'user' => $user,
                 'roles' => $user->roles,
-                'permissions' => $user->permissions()
-            ]
+                'permissions' => $user->permissions(),
+            ],
         ]);
     }
 
@@ -130,16 +129,16 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $user = auth()->user();
-        
+        $user = auth('api')->user();
+
         // Create audit log
         AuditLog::log('logout', 'User', $user->id, null, null, 'User logged out');
-        
-        auth()->logout();
+
+        auth('api')->logout();
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully logged out'
+            'message' => 'Successfully logged out',
         ]);
     }
 
@@ -151,10 +150,10 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'token' => auth()->refresh(),
+                'token' => auth('api')->refresh(),
                 'token_type' => 'bearer',
-                'expires_in' => auth()->factory()->getTTL() * 60
-            ]
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+            ],
         ]);
     }
 
@@ -172,13 +171,13 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        $user = auth()->user();
+        $user = auth('api')->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Current password is incorrect',

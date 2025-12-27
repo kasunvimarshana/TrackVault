@@ -4,26 +4,40 @@ namespace App\Domain\Entities;
 
 /**
  * Supplier Domain Entity
- * 
+ *
  * Represents the core business concept of a Supplier.
  * This is a pure domain object with business logic and no framework dependencies.
  */
 class SupplierEntity
 {
     private ?int $id;
+
     private string $name;
+
     private string $code;
+
     private ?string $contactPerson;
+
     private ?string $phone;
+
     private ?string $email;
+
     private ?string $address;
+
     private ?string $city;
+
     private ?string $state;
+
     private ?string $country;
+
     private ?string $postalCode;
+
     private string $status;
+
     private int $version;
+
     private ?\DateTimeInterface $createdAt;
+
     private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
@@ -46,7 +60,7 @@ class SupplierEntity
         $this->validateName($name);
         $this->validateCode($code);
         $this->validateStatus($status);
-        
+
         if ($email !== null) {
             $this->validateEmail($email);
         }
@@ -69,21 +83,80 @@ class SupplierEntity
     }
 
     // Getters
-    public function getId(): ?int { return $this->id; }
-    public function getName(): string { return $this->name; }
-    public function getCode(): string { return $this->code; }
-    public function getContactPerson(): ?string { return $this->contactPerson; }
-    public function getPhone(): ?string { return $this->phone; }
-    public function getEmail(): ?string { return $this->email; }
-    public function getAddress(): ?string { return $this->address; }
-    public function getCity(): ?string { return $this->city; }
-    public function getState(): ?string { return $this->state; }
-    public function getCountry(): ?string { return $this->country; }
-    public function getPostalCode(): ?string { return $this->postalCode; }
-    public function getStatus(): string { return $this->status; }
-    public function getVersion(): int { return $this->version; }
-    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
-    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getCode(): string
+    {
+        return $this->code;
+    }
+
+    public function getContactPerson(): ?string
+    {
+        return $this->contactPerson;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
 
     // Business methods
     public function isActive(): bool
@@ -121,7 +194,7 @@ class SupplierEntity
         if ($email !== null) {
             $this->email = $email;
         }
-        
+
         $this->incrementVersion();
     }
 
@@ -147,7 +220,7 @@ class SupplierEntity
         if ($postalCode !== null) {
             $this->postalCode = $postalCode;
         }
-        
+
         $this->incrementVersion();
     }
 
@@ -162,7 +235,7 @@ class SupplierEntity
         if (empty(trim($name))) {
             throw new \InvalidArgumentException('Supplier name cannot be empty');
         }
-        
+
         if (strlen($name) > 255) {
             throw new \InvalidArgumentException('Supplier name cannot exceed 255 characters');
         }
@@ -173,7 +246,7 @@ class SupplierEntity
         if (empty(trim($code))) {
             throw new \InvalidArgumentException('Supplier code cannot be empty');
         }
-        
+
         if (strlen($code) > 50) {
             throw new \InvalidArgumentException('Supplier code cannot exceed 50 characters');
         }
@@ -181,7 +254,7 @@ class SupplierEntity
 
     private function validateEmail(string $email): void
     {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Invalid email format');
         }
     }
@@ -189,8 +262,8 @@ class SupplierEntity
     private function validateStatus(string $status): void
     {
         $validStatuses = ['active', 'inactive'];
-        if (!in_array($status, $validStatuses)) {
-            throw new \InvalidArgumentException('Invalid status. Must be one of: ' . implode(', ', $validStatuses));
+        if (! in_array($status, $validStatuses)) {
+            throw new \InvalidArgumentException('Invalid status. Must be one of: '.implode(', ', $validStatuses));
         }
     }
 

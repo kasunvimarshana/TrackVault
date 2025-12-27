@@ -6,7 +6,7 @@ use App\Domain\Repositories\ProductRateRepositoryInterface;
 
 /**
  * List Product Rates Use Case
- * 
+ *
  * Lists all rates for a product.
  */
 class ListProductRatesUseCase
@@ -21,8 +21,6 @@ class ListProductRatesUseCase
     /**
      * Execute the use case
      *
-     * @param int $productId
-     * @param bool $activeOnly
      * @return array ProductRateEntity[]
      */
     public function execute(int $productId, bool $activeOnly = false): array

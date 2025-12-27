@@ -4,24 +4,36 @@ namespace App\Application\DTOs;
 
 /**
  * Collection Data Transfer Object
- * 
+ *
  * Used to transfer collection data between layers.
  * Implements immutability and validation at the application layer.
  */
 class CollectionDTO
 {
     public readonly int $supplierId;
+
     public readonly int $productId;
+
     public readonly int $collectedBy;
+
     public readonly float $quantity;
+
     public readonly string $unit;
+
     public readonly float $rate;
+
     public readonly ?int $rateId;
+
     public readonly string $collectionDate;
+
     public readonly ?string $collectionTime;
+
     public readonly ?string $notes;
+
     public readonly array $metadata;
+
     public readonly ?int $id;
+
     public readonly int $version;
 
     public function __construct(

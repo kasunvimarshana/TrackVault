@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Collection;
 
+use App\Application\DTOs\CollectionDTO;
 use App\Domain\Entities\CollectionEntity;
 use App\Domain\Repositories\CollectionRepositoryInterface;
-use App\Application\DTOs\CollectionDTO;
 
 /**
  * Update Collection Use Case
- * 
+ *
  * Encapsulates the business logic for updating a collection with version control.
  */
 class UpdateCollectionUseCase
@@ -23,9 +23,6 @@ class UpdateCollectionUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @param CollectionDTO $dto
-     * @return CollectionEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
@@ -40,7 +37,7 @@ class UpdateCollectionUseCase
         // Optimistic locking: Check version conflict
         if ($existingCollection->getVersion() !== $dto->version) {
             throw new \RuntimeException(
-                "Version conflict: Collection has been modified by another user. " .
+                'Version conflict: Collection has been modified by another user. '.
                 "Expected version {$dto->version}, but current version is {$existingCollection->getVersion()}"
             );
         }
@@ -69,7 +66,7 @@ class UpdateCollectionUseCase
         try {
             return $this->repository->save($collection);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update collection: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to update collection: '.$e->getMessage(), 0, $e);
         }
     }
 }

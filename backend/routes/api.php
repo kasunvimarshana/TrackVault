@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +28,7 @@ Route::middleware('auth:api')->group(function () {
 
     // User management routes
     Route::apiResource('users', App\Http\Controllers\Api\UserController::class);
-    
+
     // Role and Permission routes
     Route::apiResource('roles', App\Http\Controllers\Api\RoleController::class);
     Route::apiResource('permissions', App\Http\Controllers\Api\PermissionController::class);

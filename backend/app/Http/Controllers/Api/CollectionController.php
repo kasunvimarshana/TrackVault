@@ -2,29 +2,33 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Application\DTOs\CollectionDTO;
 use App\Application\UseCases\Collection\CreateCollectionUseCase;
-use App\Application\UseCases\Collection\UpdateCollectionUseCase;
+use App\Application\UseCases\Collection\DeleteCollectionUseCase;
 use App\Application\UseCases\Collection\GetCollectionUseCase;
 use App\Application\UseCases\Collection\ListCollectionsUseCase;
-use App\Application\UseCases\Collection\DeleteCollectionUseCase;
+use App\Application\UseCases\Collection\UpdateCollectionUseCase;
 use App\Application\UseCases\ProductRate\GetCurrentRateUseCase;
-use App\Application\DTOs\CollectionDTO;
 use App\Domain\Repositories\CollectionRepositoryInterface;
-use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Domain\Repositories\ProductRepositoryInterface;
 use App\Domain\Repositories\ProductRateRepositoryInterface;
+use App\Domain\Repositories\ProductRepositoryInterface;
+use App\Domain\Repositories\SupplierRepositoryInterface;
 use App\Domain\Services\AuditServiceInterface;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class CollectionController extends Controller
 {
     private CollectionRepositoryInterface $collectionRepository;
+
     private SupplierRepositoryInterface $supplierRepository;
+
     private ProductRepositoryInterface $productRepository;
+
     private ProductRateRepositoryInterface $rateRepository;
+
     private AuditServiceInterface $auditService;
 
     public function __construct(
@@ -45,27 +49,27 @@ class CollectionController extends Controller
     {
         try {
             $useCase = new ListCollectionsUseCase($this->collectionRepository);
-            
+
             $filters = [
                 'supplier_id' => $request->get('supplier_id'),
                 'product_id' => $request->get('product_id'),
                 'from_date' => $request->get('from_date'),
                 'to_date' => $request->get('to_date'),
             ];
-            
-            $filters = array_filter($filters, fn($value) => $value !== null);
-            
+
+            $filters = array_filter($filters, fn ($value) => $value !== null);
+
             $result = $useCase->execute($filters, $request->get('page', 1), $request->get('per_page', 15));
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'items' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+                    'items' => array_map(fn ($entity) => $entity->toArray(), $result['data']),
                     'total' => $result['total'],
                     'current_page' => $result['page'],
                     'per_page' => $result['per_page'],
                     'last_page' => $result['last_page'],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
@@ -93,7 +97,7 @@ class CollectionController extends Controller
 
             // Get rate if not provided
             $rate = $request->rate;
-            if (!$rate) {
+            if (! $rate) {
                 $getCurrentRateUseCase = new GetCurrentRateUseCase($this->rateRepository, $this->productRepository);
                 try {
                     $product = $this->productRepository->findById($request->product_id);
@@ -127,9 +131,11 @@ class CollectionController extends Controller
             return response()->json(['success' => true, 'message' => 'Collection created successfully', 'data' => $collection->toArray()], 201);
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to create collection', 'error' => $e->getMessage()], 500);
         }
     }
@@ -139,6 +145,7 @@ class CollectionController extends Controller
         try {
             $useCase = new GetCollectionUseCase($this->collectionRepository);
             $collection = $useCase->execute($id);
+
             return response()->json(['success' => true, 'data' => $collection->toArray()]);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
@@ -168,7 +175,7 @@ class CollectionController extends Controller
             DB::beginTransaction();
 
             $existing = $this->collectionRepository->findById($id);
-            if (!$existing) {
+            if (! $existing) {
                 return response()->json(['success' => false, 'message' => 'Collection not found'], 404);
             }
 
@@ -197,12 +204,15 @@ class CollectionController extends Controller
             return response()->json(['success' => true, 'message' => 'Collection updated successfully', 'data' => $collection->toArray()]);
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\RuntimeException $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 409);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['success' => false, 'message' => 'Failed to update collection', 'error' => $e->getMessage()], 500);
         }
     }
@@ -231,7 +241,8 @@ class CollectionController extends Controller
     {
         try {
             $collections = $this->collectionRepository->findBySupplier($supplierId);
-            return response()->json(['success' => true, 'data' => array_map(fn($c) => $c->toArray(), $collections)]);
+
+            return response()->json(['success' => true, 'data' => array_map(fn ($c) => $c->toArray(), $collections)]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
         }
@@ -242,7 +253,8 @@ class CollectionController extends Controller
         try {
             $dateTime = new \DateTime($date);
             $collections = $this->collectionRepository->findByDate($dateTime);
-            return response()->json(['success' => true, 'data' => array_map(fn($c) => $c->toArray(), $collections)]);
+
+            return response()->json(['success' => true, 'data' => array_map(fn ($c) => $c->toArray(), $collections)]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
         }

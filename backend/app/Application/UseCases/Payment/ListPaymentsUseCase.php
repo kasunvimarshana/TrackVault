@@ -6,7 +6,7 @@ use App\Domain\Repositories\PaymentRepositoryInterface;
 
 /**
  * List Payments Use Case
- * 
+ *
  * Lists payments with optional filtering and pagination.
  */
 class ListPaymentsUseCase
@@ -21,9 +21,6 @@ class ListPaymentsUseCase
     /**
      * Execute the use case
      *
-     * @param array $filters
-     * @param int $page
-     * @param int $perPage
      * @return array ['data' => PaymentEntity[], 'total' => int, 'page' => int]
      */
     public function execute(array $filters = [], int $page = 1, int $perPage = 15): array

@@ -7,7 +7,7 @@ use App\Domain\Repositories\PaymentRepositoryInterface;
 
 /**
  * Get Payment Use Case
- * 
+ *
  * Retrieves a single payment by ID.
  */
 class GetPaymentUseCase
@@ -22,8 +22,6 @@ class GetPaymentUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return PaymentEntity
      * @throws \InvalidArgumentException
      */
     public function execute(int $id): PaymentEntity

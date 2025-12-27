@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Supplier;
 
+use App\Application\DTOs\SupplierDTO;
 use App\Domain\Entities\SupplierEntity;
 use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Application\DTOs\SupplierDTO;
 
 /**
  * Create Supplier Use Case
- * 
+ *
  * Encapsulates the business logic for creating a new supplier.
  * This follows Single Responsibility Principle (SOLID).
  */
@@ -24,15 +24,13 @@ class CreateSupplierUseCase
     /**
      * Execute the use case
      *
-     * @param SupplierDTO $dto
-     * @return SupplierEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(SupplierDTO $dto): SupplierEntity
     {
         // Business rule: Code must be unique
-        if (!$this->repository->isCodeUnique($dto->code)) {
+        if (! $this->repository->isCodeUnique($dto->code)) {
             throw new \InvalidArgumentException("Supplier code '{$dto->code}' already exists");
         }
 
@@ -55,7 +53,7 @@ class CreateSupplierUseCase
         try {
             return $this->repository->save($supplier);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to create supplier: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to create supplier: '.$e->getMessage(), 0, $e);
         }
     }
 }

@@ -4,20 +4,28 @@ namespace App\Application\DTOs;
 
 /**
  * Product Data Transfer Object
- * 
+ *
  * Used to transfer product data between layers.
  * Implements immutability and validation at the application layer.
  */
 class ProductDTO
 {
     public readonly string $name;
+
     public readonly string $code;
+
     public readonly ?string $description;
+
     public readonly string $baseUnit;
+
     public readonly array $allowedUnits;
+
     public readonly string $status;
+
     public readonly array $metadata;
+
     public readonly ?int $id;
+
     public readonly int $version;
 
     public function __construct(

@@ -4,22 +4,32 @@ namespace App\Application\DTOs;
 
 /**
  * Payment Data Transfer Object
- * 
+ *
  * Used to transfer payment data between layers.
  * Implements immutability and validation at the application layer.
  */
 class PaymentDTO
 {
     public readonly int $supplierId;
+
     public readonly float $amount;
+
     public readonly string $paymentType;
+
     public readonly string $paymentDate;
+
     public readonly int $recordedBy;
+
     public readonly ?string $paymentMethod;
+
     public readonly ?string $referenceNumber;
+
     public readonly ?string $notes;
+
     public readonly array $metadata;
+
     public readonly ?int $id;
+
     public readonly int $version;
 
     public function __construct(

@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Supplier;
+use App\Application\DTOs\SupplierDTO;
 use App\Application\UseCases\Supplier\CreateSupplierUseCase;
-use App\Application\UseCases\Supplier\UpdateSupplierUseCase;
+use App\Application\UseCases\Supplier\DeleteSupplierUseCase;
 use App\Application\UseCases\Supplier\GetSupplierUseCase;
 use App\Application\UseCases\Supplier\ListSuppliersUseCase;
-use App\Application\UseCases\Supplier\DeleteSupplierUseCase;
-use App\Application\DTOs\SupplierDTO;
+use App\Application\UseCases\Supplier\UpdateSupplierUseCase;
 use App\Domain\Repositories\SupplierRepositoryInterface;
 use App\Domain\Services\AuditServiceInterface;
+use App\Http\Controllers\Controller;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 /**
  * Supplier Controller
- * 
+ *
  * Handles HTTP requests for supplier operations.
  * Follows Clean Architecture by delegating business logic to Use Cases.
  * This is the Interface/Presentation layer.
@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Validator;
 class SupplierController extends Controller
 {
     private SupplierRepositoryInterface $repository;
+
     private AuditServiceInterface $auditService;
 
     public function __construct(
@@ -42,34 +43,34 @@ class SupplierController extends Controller
     {
         try {
             $useCase = new ListSuppliersUseCase($this->repository);
-            
+
             $filters = [
                 'status' => $request->get('status'),
                 'search' => $request->get('search'),
             ];
-            
-            $filters = array_filter($filters, fn($value) => $value !== null);
-            
+
+            $filters = array_filter($filters, fn ($value) => $value !== null);
+
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 15);
-            
+
             $result = $useCase->execute($filters, $page, $perPage);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'items' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+                    'items' => array_map(fn ($entity) => $entity->toArray(), $result['data']),
                     'total' => $result['total'],
                     'current_page' => $result['current_page'],
                     'per_page' => $result['per_page'],
                     'last_page' => $result['last_page'],
-                ]
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve suppliers',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -98,14 +99,14 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         try {
             // Auto-generate code if not provided
-            $code = $request->code ?? 'SUP' . str_pad(Supplier::count() + 1, 6, '0', STR_PAD_LEFT);
-            
+            $code = $request->code ?? 'SUP'.str_pad(Supplier::count() + 1, 6, '0', STR_PAD_LEFT);
+
             // Create DTO from request
             $dto = SupplierDTO::fromArray([
                 'name' => $request->name,
@@ -131,18 +132,18 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Supplier created successfully',
-                'data' => $supplier->toArray()
+                'data' => $supplier->toArray(),
             ], 201);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create supplier',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -158,18 +159,18 @@ class SupplierController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $supplier->toArray()
+                'data' => $supplier->toArray(),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve supplier',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -199,7 +200,7 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -229,30 +230,30 @@ class SupplierController extends Controller
             $updatedSupplier = $useCase->execute($id, $dto);
 
             // Log audit trail using service (Clean Architecture)
-            $this->auditService->log('update', 'Supplier', $updatedSupplier->getId(), 
-                $currentSupplier->toArray(), $updatedSupplier->toArray(), 
+            $this->auditService->log('update', 'Supplier', $updatedSupplier->getId(),
+                $currentSupplier->toArray(), $updatedSupplier->toArray(),
                 'Supplier updated', auth()->id());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Supplier updated successfully',
-                'data' => $updatedSupplier->toArray()
+                'data' => $updatedSupplier->toArray(),
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         } catch (\RuntimeException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 409); // Conflict status code for version mismatch
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update supplier',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -277,18 +278,18 @@ class SupplierController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Supplier deleted successfully'
+                'message' => 'Supplier deleted successfully',
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete supplier',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -304,13 +305,13 @@ class SupplierController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $collections
+                'data' => $collections,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve collections',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -326,13 +327,13 @@ class SupplierController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $payments
+                'data' => $payments,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve payments',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -358,18 +359,18 @@ class SupplierController extends Controller
                     'total_collections' => $balance['total_collections'],
                     'total_payments' => $balance['total_payments'],
                     'outstanding_balance' => $balance['outstanding_balance'],
-                ]
+                ],
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to calculate balance',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

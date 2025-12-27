@@ -17,7 +17,7 @@ class CheckRole
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',

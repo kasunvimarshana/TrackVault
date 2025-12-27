@@ -2,13 +2,13 @@
 
 namespace App\Application\UseCases\Payment;
 
+use App\Application\DTOs\PaymentDTO;
 use App\Domain\Entities\PaymentEntity;
 use App\Domain\Repositories\PaymentRepositoryInterface;
-use App\Application\DTOs\PaymentDTO;
 
 /**
  * Update Payment Use Case
- * 
+ *
  * Encapsulates the business logic for updating a payment with version control.
  */
 class UpdatePaymentUseCase
@@ -23,9 +23,6 @@ class UpdatePaymentUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @param PaymentDTO $dto
-     * @return PaymentEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
@@ -40,7 +37,7 @@ class UpdatePaymentUseCase
         // Optimistic locking: Check version conflict
         if ($existingPayment->getVersion() !== $dto->version) {
             throw new \RuntimeException(
-                "Version conflict: Payment has been modified by another user. " .
+                'Version conflict: Payment has been modified by another user. '.
                 "Expected version {$dto->version}, but current version is {$existingPayment->getVersion()}"
             );
         }
@@ -67,7 +64,7 @@ class UpdatePaymentUseCase
         try {
             return $this->repository->save($payment);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to update payment: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to update payment: '.$e->getMessage(), 0, $e);
         }
     }
 }

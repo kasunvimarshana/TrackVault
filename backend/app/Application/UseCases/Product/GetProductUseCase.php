@@ -7,7 +7,7 @@ use App\Domain\Repositories\ProductRepositoryInterface;
 
 /**
  * Get Product Use Case
- * 
+ *
  * Retrieves a single product by ID.
  */
 class GetProductUseCase
@@ -22,8 +22,6 @@ class GetProductUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return ProductEntity
      * @throws \InvalidArgumentException
      */
     public function execute(int $id): ProductEntity

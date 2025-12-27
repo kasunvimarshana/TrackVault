@@ -2,19 +2,20 @@
 
 namespace App\Application\UseCases\Payment;
 
+use App\Application\DTOs\PaymentDTO;
 use App\Domain\Entities\PaymentEntity;
 use App\Domain\Repositories\PaymentRepositoryInterface;
 use App\Domain\Repositories\SupplierRepositoryInterface;
-use App\Application\DTOs\PaymentDTO;
 
 /**
  * Create Payment Use Case
- * 
+ *
  * Encapsulates the business logic for creating a new payment.
  */
 class CreatePaymentUseCase
 {
     private PaymentRepositoryInterface $paymentRepository;
+
     private SupplierRepositoryInterface $supplierRepository;
 
     public function __construct(
@@ -28,15 +29,13 @@ class CreatePaymentUseCase
     /**
      * Execute the use case
      *
-     * @param PaymentDTO $dto
-     * @return PaymentEntity
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(PaymentDTO $dto): PaymentEntity
     {
         // Verify supplier exists
-        if (!$this->supplierRepository->exists($dto->supplierId)) {
+        if (! $this->supplierRepository->exists($dto->supplierId)) {
             throw new \InvalidArgumentException("Supplier with ID {$dto->supplierId} not found");
         }
 
@@ -59,7 +58,7 @@ class CreatePaymentUseCase
         try {
             return $this->paymentRepository->save($payment);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to create payment: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to create payment: '.$e->getMessage(), 0, $e);
         }
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Permission;
 use App\Models\AuditLog;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -20,7 +20,7 @@ class PermissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $permissions
+            'data' => $permissions,
         ]);
     }
 
@@ -38,7 +38,7 @@ class PermissionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -52,7 +52,7 @@ class PermissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Permission created successfully',
-            'data' => $permission
+            'data' => $permission,
         ], 201);
     }
 
@@ -63,7 +63,7 @@ class PermissionController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $permission
+            'data' => $permission,
         ]);
     }
 
@@ -73,7 +73,7 @@ class PermissionController extends Controller
     public function update(Request $request, Permission $permission)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255|unique:permissions,name,' . $permission->id,
+            'name' => 'sometimes|required|string|max:255|unique:permissions,name,'.$permission->id,
             'description' => 'nullable|string',
         ]);
 
@@ -81,12 +81,12 @@ class PermissionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $oldData = $permission->toArray();
-        
+
         $permission->update($request->only(['name', 'description']));
 
         AuditLog::log('update', 'Permission', $permission->id, $oldData, $permission->toArray(), 'Permission updated', auth()->id());
@@ -94,7 +94,7 @@ class PermissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Permission updated successfully',
-            'data' => $permission
+            'data' => $permission,
         ]);
     }
 
@@ -104,14 +104,14 @@ class PermissionController extends Controller
     public function destroy(Permission $permission)
     {
         $oldData = $permission->toArray();
-        
+
         $permission->delete();
 
         AuditLog::log('delete', 'Permission', $permission->id, $oldData, null, 'Permission deleted', auth()->id());
 
         return response()->json([
             'success' => true,
-            'message' => 'Permission deleted successfully'
+            'message' => 'Permission deleted successfully',
         ]);
     }
 }

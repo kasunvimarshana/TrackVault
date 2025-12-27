@@ -6,7 +6,7 @@ use App\Domain\Repositories\CollectionRepositoryInterface;
 
 /**
  * Delete Collection Use Case
- * 
+ *
  * Deletes a collection by ID.
  */
 class DeleteCollectionUseCase
@@ -21,21 +21,19 @@ class DeleteCollectionUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return bool
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(int $id): bool
     {
-        if (!$this->repository->exists($id)) {
+        if (! $this->repository->exists($id)) {
             throw new \InvalidArgumentException("Collection with ID {$id} not found");
         }
 
         try {
             return $this->repository->delete($id);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to delete collection: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to delete collection: '.$e->getMessage(), 0, $e);
         }
     }
 }

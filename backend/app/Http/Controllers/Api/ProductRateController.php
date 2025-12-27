@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductRate;
 use App\Models\AuditLog;
+use App\Models\ProductRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,9 +28,9 @@ class ProductRateController extends Controller
         }
 
         if ($request->has('to_date')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->whereNull('effective_to')
-                  ->orWhere('effective_to', '<=', $request->to_date);
+                    ->orWhere('effective_to', '<=', $request->to_date);
             });
         }
 
@@ -39,7 +39,7 @@ class ProductRateController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $rates
+            'data' => $rates,
         ]);
     }
 
@@ -59,7 +59,7 @@ class ProductRateController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -75,7 +75,7 @@ class ProductRateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product rate created successfully',
-            'data' => $rate->load('product')
+            'data' => $rate->load('product'),
         ], 201);
     }
 
@@ -86,7 +86,7 @@ class ProductRateController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $productRate->load('product')
+            'data' => $productRate->load('product'),
         ]);
     }
 
@@ -105,12 +105,12 @@ class ProductRateController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $oldData = $productRate->toArray();
-        
+
         $productRate->update($request->only(['rate_per_unit', 'effective_from', 'effective_to']));
 
         AuditLog::log('update', 'ProductRate', $productRate->id, $oldData, $productRate->toArray(), 'Product rate updated', auth()->id());
@@ -118,7 +118,7 @@ class ProductRateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product rate updated successfully',
-            'data' => $productRate->load('product')
+            'data' => $productRate->load('product'),
         ]);
     }
 
@@ -128,14 +128,14 @@ class ProductRateController extends Controller
     public function destroy(ProductRate $productRate)
     {
         $oldData = $productRate->toArray();
-        
+
         $productRate->delete();
 
         AuditLog::log('delete', 'ProductRate', $productRate->id, $oldData, null, 'Product rate deleted', auth()->id());
 
         return response()->json([
             'success' => true,
-            'message' => 'Product rate deleted successfully'
+            'message' => 'Product rate deleted successfully',
         ]);
     }
 }

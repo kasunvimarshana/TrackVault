@@ -4,27 +4,42 @@ namespace App\Domain\Entities;
 
 /**
  * Collection Domain Entity
- * 
+ *
  * Represents a collection of products from a supplier.
  * This is a pure domain object with business logic and no framework dependencies.
  */
 class CollectionEntity
 {
     private ?int $id;
+
     private int $supplierId;
+
     private int $productId;
+
     private int $collectedBy;
+
     private float $quantity;
+
     private string $unit;
+
     private float $rate;
+
     private ?int $rateId;
+
     private float $totalAmount;
+
     private \DateTimeInterface $collectionDate;
+
     private ?string $collectionTime;
+
     private ?string $notes;
+
     private array $metadata;
+
     private int $version;
+
     private ?\DateTimeInterface $createdAt;
+
     private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
@@ -67,22 +82,85 @@ class CollectionEntity
     }
 
     // Getters
-    public function getId(): ?int { return $this->id; }
-    public function getSupplierId(): int { return $this->supplierId; }
-    public function getProductId(): int { return $this->productId; }
-    public function getCollectedBy(): int { return $this->collectedBy; }
-    public function getQuantity(): float { return $this->quantity; }
-    public function getUnit(): string { return $this->unit; }
-    public function getRate(): float { return $this->rate; }
-    public function getRateId(): ?int { return $this->rateId; }
-    public function getTotalAmount(): float { return $this->totalAmount; }
-    public function getCollectionDate(): \DateTimeInterface { return $this->collectionDate; }
-    public function getCollectionTime(): ?string { return $this->collectionTime; }
-    public function getNotes(): ?string { return $this->notes; }
-    public function getMetadata(): array { return $this->metadata; }
-    public function getVersion(): int { return $this->version; }
-    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
-    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getSupplierId(): int
+    {
+        return $this->supplierId;
+    }
+
+    public function getProductId(): int
+    {
+        return $this->productId;
+    }
+
+    public function getCollectedBy(): int
+    {
+        return $this->collectedBy;
+    }
+
+    public function getQuantity(): float
+    {
+        return $this->quantity;
+    }
+
+    public function getUnit(): string
+    {
+        return $this->unit;
+    }
+
+    public function getRate(): float
+    {
+        return $this->rate;
+    }
+
+    public function getRateId(): ?int
+    {
+        return $this->rateId;
+    }
+
+    public function getTotalAmount(): float
+    {
+        return $this->totalAmount;
+    }
+
+    public function getCollectionDate(): \DateTimeInterface
+    {
+        return $this->collectionDate;
+    }
+
+    public function getCollectionTime(): ?string
+    {
+        return $this->collectionTime;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
 
     // Business methods
     public function updateQuantity(float $quantity): void
@@ -173,8 +251,8 @@ class CollectionEntity
     private function validateUnit(string $unit): void
     {
         $validUnits = ['kg', 'g', 'l', 'ml', 'unit', 'lb', 'oz', 't'];
-        if (!in_array($unit, $validUnits)) {
-            throw new \InvalidArgumentException('Invalid unit. Must be one of: ' . implode(', ', $validUnits));
+        if (! in_array($unit, $validUnits)) {
+            throw new \InvalidArgumentException('Invalid unit. Must be one of: '.implode(', ', $validUnits));
         }
     }
 

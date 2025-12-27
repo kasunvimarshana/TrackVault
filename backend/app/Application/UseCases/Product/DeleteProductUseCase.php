@@ -6,7 +6,7 @@ use App\Domain\Repositories\ProductRepositoryInterface;
 
 /**
  * Delete Product Use Case
- * 
+ *
  * Deletes a product by ID.
  */
 class DeleteProductUseCase
@@ -21,21 +21,19 @@ class DeleteProductUseCase
     /**
      * Execute the use case
      *
-     * @param int $id
-     * @return bool
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
     public function execute(int $id): bool
     {
-        if (!$this->repository->exists($id)) {
+        if (! $this->repository->exists($id)) {
             throw new \InvalidArgumentException("Product with ID {$id} not found");
         }
 
         try {
             return $this->repository->delete($id);
         } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to delete product: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Failed to delete product: '.$e->getMessage(), 0, $e);
         }
     }
 }

@@ -4,24 +4,36 @@ namespace App\Domain\Entities;
 
 /**
  * Payment Domain Entity
- * 
+ *
  * Represents a payment made to or by a supplier.
  * This is a pure domain object with business logic and no framework dependencies.
  */
 class PaymentEntity
 {
     private ?int $id;
+
     private int $supplierId;
+
     private float $amount;
+
     private string $paymentType;
+
     private \DateTimeInterface $paymentDate;
+
     private ?string $paymentMethod;
+
     private ?string $referenceNumber;
+
     private ?string $notes;
+
     private int $recordedBy;
+
     private array $metadata;
+
     private int $version;
+
     private ?\DateTimeInterface $createdAt;
+
     private ?\DateTimeInterface $updatedAt;
 
     public function __construct(
@@ -58,19 +70,70 @@ class PaymentEntity
     }
 
     // Getters
-    public function getId(): ?int { return $this->id; }
-    public function getSupplierId(): int { return $this->supplierId; }
-    public function getAmount(): float { return $this->amount; }
-    public function getPaymentType(): string { return $this->paymentType; }
-    public function getPaymentDate(): \DateTimeInterface { return $this->paymentDate; }
-    public function getPaymentMethod(): ?string { return $this->paymentMethod; }
-    public function getReferenceNumber(): ?string { return $this->referenceNumber; }
-    public function getNotes(): ?string { return $this->notes; }
-    public function getRecordedBy(): int { return $this->recordedBy; }
-    public function getMetadata(): array { return $this->metadata; }
-    public function getVersion(): int { return $this->version; }
-    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
-    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getSupplierId(): int
+    {
+        return $this->supplierId;
+    }
+
+    public function getAmount(): float
+    {
+        return $this->amount;
+    }
+
+    public function getPaymentType(): string
+    {
+        return $this->paymentType;
+    }
+
+    public function getPaymentDate(): \DateTimeInterface
+    {
+        return $this->paymentDate;
+    }
+
+    public function getPaymentMethod(): ?string
+    {
+        return $this->paymentMethod;
+    }
+
+    public function getReferenceNumber(): ?string
+    {
+        return $this->referenceNumber;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function getRecordedBy(): int
+    {
+        return $this->recordedBy;
+    }
+
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
 
     // Business methods
     public function isAdvancePayment(): bool
@@ -170,8 +233,8 @@ class PaymentEntity
     private function validatePaymentType(string $paymentType): void
     {
         $validTypes = ['advance', 'partial', 'final', 'adjustment'];
-        if (!in_array($paymentType, $validTypes)) {
-            throw new \InvalidArgumentException('Invalid payment type. Must be one of: ' . implode(', ', $validTypes));
+        if (! in_array($paymentType, $validTypes)) {
+            throw new \InvalidArgumentException('Invalid payment type. Must be one of: '.implode(', ', $validTypes));
         }
     }
 

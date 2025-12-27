@@ -7,13 +7,14 @@ use App\Domain\Repositories\PaymentRepositoryInterface;
 
 /**
  * Calculate Balance Use Case
- * 
+ *
  * Calculates the outstanding balance for a supplier by comparing
  * total collections amount with total payments.
  */
 class CalculateBalanceUseCase
 {
     private CollectionRepositoryInterface $collectionRepository;
+
     private PaymentRepositoryInterface $paymentRepository;
 
     public function __construct(
@@ -27,9 +28,6 @@ class CalculateBalanceUseCase
     /**
      * Execute the use case
      *
-     * @param int $supplierId
-     * @param \DateTimeInterface|null $fromDate
-     * @param \DateTimeInterface|null $toDate
      * @return array ['total_collections' => float, 'total_payments' => float, 'outstanding_balance' => float]
      */
     public function execute(

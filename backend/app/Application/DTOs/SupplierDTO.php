@@ -4,24 +4,36 @@ namespace App\Application\DTOs;
 
 /**
  * Supplier Data Transfer Object
- * 
+ *
  * Used to transfer supplier data between layers.
  * Implements immutability and validation at the application layer.
  */
 class SupplierDTO
 {
     public readonly string $name;
+
     public readonly string $code;
+
     public readonly ?string $contactPerson;
+
     public readonly ?string $phone;
+
     public readonly ?string $email;
+
     public readonly ?string $address;
+
     public readonly ?string $city;
+
     public readonly ?string $state;
+
     public readonly ?string $country;
+
     public readonly ?string $postalCode;
+
     public readonly string $status;
+
     public readonly ?int $id;
+
     public readonly int $version;
 
     public function __construct(

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->integer('version')->default(1);
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->index(['supplier_id', 'payment_date']);
             $table->index('payment_type');
             $table->index('recorded_by');
