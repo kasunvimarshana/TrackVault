@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, API_TIMEOUT, STORAGE_KEYS, ERROR_MESSAGES } from '../shared/constants';
-import { ApiResponse } from '../shared/types';
+import { API_BASE_URL, API_TIMEOUT, STORAGE_KEYS, ERROR_MESSAGES } from '../../shared/constants';
+import { ApiResponse } from '../../shared/types';
 
 class ApiClient {
   private client: AxiosInstance;
