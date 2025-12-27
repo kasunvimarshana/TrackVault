@@ -3,53 +3,75 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Collection;
-use App\Models\Product;
-use App\Models\AuditLog;
+use App\Application\UseCases\Collection\CreateCollectionUseCase;
+use App\Application\UseCases\Collection\UpdateCollectionUseCase;
+use App\Application\UseCases\Collection\GetCollectionUseCase;
+use App\Application\UseCases\Collection\ListCollectionsUseCase;
+use App\Application\UseCases\Collection\DeleteCollectionUseCase;
+use App\Application\UseCases\ProductRate\GetCurrentRateUseCase;
+use App\Application\DTOs\CollectionDTO;
+use App\Domain\Repositories\CollectionRepositoryInterface;
+use App\Domain\Repositories\SupplierRepositoryInterface;
+use App\Domain\Repositories\ProductRepositoryInterface;
+use App\Domain\Repositories\ProductRateRepositoryInterface;
+use App\Domain\Services\AuditServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
 class CollectionController extends Controller
 {
-    /**
-     * Display a listing of collections.
-     */
-    public function index(Request $request)
-    {
-        $query = Collection::with(['supplier', 'product']);
+    private CollectionRepositoryInterface $collectionRepository;
+    private SupplierRepositoryInterface $supplierRepository;
+    private ProductRepositoryInterface $productRepository;
+    private ProductRateRepositoryInterface $rateRepository;
+    private AuditServiceInterface $auditService;
 
-        // Filter by supplier
-        if ($request->has('supplier_id')) {
-            $query->where('supplier_id', $request->supplier_id);
-        }
-
-        // Filter by product
-        if ($request->has('product_id')) {
-            $query->where('product_id', $request->product_id);
-        }
-
-        // Filter by date range
-        if ($request->has('from_date')) {
-            $query->where('collection_date', '>=', $request->from_date);
-        }
-
-        if ($request->has('to_date')) {
-            $query->where('collection_date', '<=', $request->to_date);
-        }
-
-        $perPage = $request->get('per_page', 15);
-        $collections = $query->orderBy('collection_date', 'desc')->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $collections
-        ]);
+    public function __construct(
+        CollectionRepositoryInterface $collectionRepository,
+        SupplierRepositoryInterface $supplierRepository,
+        ProductRepositoryInterface $productRepository,
+        ProductRateRepositoryInterface $rateRepository,
+        AuditServiceInterface $auditService
+    ) {
+        $this->collectionRepository = $collectionRepository;
+        $this->supplierRepository = $supplierRepository;
+        $this->productRepository = $productRepository;
+        $this->rateRepository = $rateRepository;
+        $this->auditService = $auditService;
     }
 
-    /**
-     * Store a newly created collection.
-     */
+    public function index(Request $request)
+    {
+        try {
+            $useCase = new ListCollectionsUseCase($this->collectionRepository);
+            
+            $filters = [
+                'supplier_id' => $request->get('supplier_id'),
+                'product_id' => $request->get('product_id'),
+                'from_date' => $request->get('from_date'),
+                'to_date' => $request->get('to_date'),
+            ];
+            
+            $filters = array_filter($filters, fn($value) => $value !== null);
+            
+            $result = $useCase->execute($filters, $request->get('page', 1), $request->get('per_page', 15));
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'items' => array_map(fn($entity) => $entity->toArray(), $result['data']),
+                    'total' => $result['total'],
+                    'current_page' => $result['page'],
+                    'per_page' => $result['per_page'],
+                    'last_page' => $result['last_page'],
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -58,81 +80,74 @@ class CollectionController extends Controller
             'quantity' => 'required|numeric|min:0',
             'unit' => 'required|string|max:20',
             'collection_date' => 'required|date',
-            'rate_per_unit' => 'nullable|numeric|min:0',
+            'rate' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
+
             // Get rate if not provided
-            $rate = $request->rate_per_unit;
+            $rate = $request->rate;
             if (!$rate) {
-                $product = Product::find($request->product_id);
-                if ($product) {
-                    $currentRate = $product->currentRate();
-                    if ($currentRate) {
-                        $rate = $currentRate->rate_per_unit;
-                    }
+                $getCurrentRateUseCase = new GetCurrentRateUseCase($this->rateRepository, $this->productRepository);
+                try {
+                    $product = $this->productRepository->findById($request->product_id);
+                    $rateEntity = $getCurrentRateUseCase->execute($request->product_id, $request->unit);
+                    $rate = $rateEntity->getRate();
+                } catch (\Exception $e) {
+                    $rate = 0;
                 }
             }
 
-            // Calculate total amount
-            $totalAmount = $request->quantity * ($rate ?? 0);
-
-            $collection = Collection::create([
+            $dto = CollectionDTO::fromArray([
                 'supplier_id' => $request->supplier_id,
                 'product_id' => $request->product_id,
+                'collected_by' => auth()->id(),
                 'quantity' => $request->quantity,
                 'unit' => $request->unit,
+                'rate' => $rate,
                 'collection_date' => $request->collection_date,
-                'rate_per_unit' => $rate,
-                'total_amount' => $totalAmount,
+                'collection_time' => $request->collection_time,
                 'notes' => $request->notes,
-                'collected_by' => auth()->id(),
+                'metadata' => $request->metadata ?? [],
             ]);
 
-            AuditLog::log('create', 'Collection', $collection->id, null, $collection->toArray(), 'Collection created', auth()->id());
+            $useCase = new CreateCollectionUseCase($this->collectionRepository, $this->supplierRepository, $this->productRepository);
+            $collection = $useCase->execute($dto);
+
+            $this->auditService->log('create', 'Collection', $collection->getId(), null, $collection->toArray(), 'Collection created', auth()->id());
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Collection created successfully',
-                'data' => $collection->load(['supplier', 'product'])
-            ], 201);
+            return response()->json(['success' => true, 'message' => 'Collection created successfully', 'data' => $collection->toArray()], 201);
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create collection',
-                'errors' => [$e->getMessage()]
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to create collection', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Display the specified collection.
-     */
-    public function show(Collection $collection)
+    public function show($id)
     {
-        return response()->json([
-            'success' => true,
-            'data' => $collection->load(['supplier', 'product', 'collector'])
-        ]);
+        try {
+            $useCase = new GetCollectionUseCase($this->collectionRepository);
+            $collection = $useCase->execute($id);
+            return response()->json(['success' => true, 'data' => $collection->toArray()]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to retrieve collection', 'error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Update the specified collection.
-     */
-    public function update(Request $request, Collection $collection)
+    public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'supplier_id' => 'sometimes|required|exists:suppliers,id',
@@ -140,98 +155,96 @@ class CollectionController extends Controller
             'quantity' => 'sometimes|required|numeric|min:0',
             'unit' => 'sometimes|required|string|max:20',
             'collection_date' => 'sometimes|required|date',
-            'rate_per_unit' => 'nullable|numeric|min:0',
+            'rate' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'version' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
-        DB::beginTransaction();
         try {
-            $oldData = $collection->toArray();
-            
-            $data = $request->only(['supplier_id', 'product_id', 'quantity', 'unit', 'collection_date', 'rate_per_unit', 'notes']);
-            
-            // Recalculate total if quantity or rate changed
-            if ($request->has('quantity') || $request->has('rate_per_unit')) {
-                $quantity = $request->get('quantity', $collection->quantity);
-                $rate = $request->get('rate_per_unit', $collection->rate_per_unit);
-                $data['total_amount'] = $quantity * ($rate ?? 0);
+            DB::beginTransaction();
+
+            $existing = $this->collectionRepository->findById($id);
+            if (!$existing) {
+                return response()->json(['success' => false, 'message' => 'Collection not found'], 404);
             }
 
-            $collection->update($data);
+            $dto = CollectionDTO::fromArray([
+                'supplier_id' => $request->get('supplier_id', $existing->getSupplierId()),
+                'product_id' => $request->get('product_id', $existing->getProductId()),
+                'collected_by' => $existing->getCollectedBy(),
+                'quantity' => $request->get('quantity', $existing->getQuantity()),
+                'unit' => $request->get('unit', $existing->getUnit()),
+                'rate' => $request->get('rate', $existing->getRate()),
+                'collection_date' => $request->get('collection_date', $existing->getCollectionDate()->format('Y-m-d')),
+                'collection_time' => $request->get('collection_time', $existing->getCollectionTime()),
+                'notes' => $request->get('notes', $existing->getNotes()),
+                'metadata' => $request->get('metadata', $existing->getMetadata()),
+                'id' => $id,
+                'version' => $request->version,
+            ]);
 
-            AuditLog::log('update', 'Collection', $collection->id, $oldData, $collection->toArray(), 'Collection updated', auth()->id());
+            $useCase = new UpdateCollectionUseCase($this->collectionRepository);
+            $collection = $useCase->execute($id, $dto);
+
+            $this->auditService->log('update', 'Collection', $collection->getId(), $existing->toArray(), $collection->toArray(), 'Collection updated', auth()->id());
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Collection updated successfully',
-                'data' => $collection->load(['supplier', 'product'])
-            ]);
+            return response()->json(['success' => true, 'message' => 'Collection updated successfully', 'data' => $collection->toArray()]);
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\RuntimeException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 409);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update collection',
-                'errors' => [$e->getMessage()]
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to update collection', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Remove the specified collection.
-     */
-    public function destroy(Collection $collection)
+    public function destroy($id)
     {
-        $oldData = $collection->toArray();
-        
-        $collection->delete();
+        try {
+            $useCase = new GetCollectionUseCase($this->collectionRepository);
+            $collection = $useCase->execute($id);
+            $oldData = $collection->toArray();
 
-        AuditLog::log('delete', 'Collection', $collection->id, $oldData, null, 'Collection deleted', auth()->id());
+            $deleteUseCase = new DeleteCollectionUseCase($this->collectionRepository);
+            $deleteUseCase->execute($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Collection deleted successfully'
-        ]);
+            $this->auditService->log('delete', 'Collection', $id, $oldData, null, 'Collection deleted', auth()->id());
+
+            return response()->json(['success' => true, 'message' => 'Collection deleted successfully']);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to delete collection', 'error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Get collections by supplier.
-     */
     public function bySupplier($supplierId)
     {
-        $collections = Collection::with('product')
-            ->where('supplier_id', $supplierId)
-            ->orderBy('collection_date', 'desc')
-            ->paginate(20);
-
-        return response()->json([
-            'success' => true,
-            'data' => $collections
-        ]);
+        try {
+            $collections = $this->collectionRepository->findBySupplier($supplierId);
+            return response()->json(['success' => true, 'data' => array_map(fn($c) => $c->toArray(), $collections)]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Get collections by date.
-     */
     public function byDate($date)
     {
-        $collections = Collection::with(['supplier', 'product'])
-            ->whereDate('collection_date', $date)
-            ->orderBy('collection_date', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $collections
-        ]);
+        try {
+            $dateTime = new \DateTime($date);
+            $collections = $this->collectionRepository->findByDate($dateTime);
+            return response()->json(['success' => true, 'data' => array_map(fn($c) => $c->toArray(), $collections)]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to retrieve collections', 'error' => $e->getMessage()], 500);
+        }
     }
 }
