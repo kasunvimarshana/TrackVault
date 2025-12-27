@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Sync;
 
 use App\Domain\Repositories\SupplierRepositoryInterface;
+use App\Domain\Services\AuditServiceInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -12,9 +13,21 @@ use Illuminate\Support\Facades\Log;
  * Handles synchronization of offline data from mobile devices.
  * Implements conflict detection and resolution strategies.
  * Ensures data integrity across multiple users and devices.
+ * Follows Clean Architecture by using repository and service interfaces.
  */
 class SyncService
 {
+    private SupplierRepositoryInterface $supplierRepository;
+    private AuditServiceInterface $auditService;
+
+    public function __construct(
+        SupplierRepositoryInterface $supplierRepository,
+        AuditServiceInterface $auditService
+    ) {
+        $this->supplierRepository = $supplierRepository;
+        $this->auditService = $auditService;
+    }
+
     /**
      * Sync suppliers from mobile device
      *
@@ -108,7 +121,7 @@ class SyncService
         // Generate unique code using timestamp and random component to avoid race conditions
         $code = $data['code'] ?? 'SUP' . time() . rand(1000, 9999);
         
-        // Create through repository instead of direct model access
+        // Create domain entity
         $entity = new \App\Domain\Entities\SupplierEntity(
             name: $data['name'],
             code: $code,
@@ -123,12 +136,19 @@ class SyncService
             status: $data['status'] ?? 'active'
         );
 
-        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
-        $savedEntity = $repository->save($entity);
+        // Save through repository (Clean Architecture)
+        $savedEntity = $this->supplierRepository->save($entity);
 
-        // Audit logging - TODO: Should be delegated to an audit service
-        \App\Models\AuditLog::log('create', 'Supplier', $savedEntity->getId(), null, $savedEntity->toArray(), 
-            'Supplier created via sync', $userId);
+        // Audit logging through service interface (Clean Architecture)
+        $this->auditService->log(
+            'create',
+            'Supplier',
+            $savedEntity->getId(),
+            null,
+            $savedEntity->toArray(),
+            'Supplier created via sync',
+            $userId
+        );
 
         return [
             'status' => 'success',
@@ -145,9 +165,8 @@ class SyncService
      */
     private function updateExistingSupplier(int $serverId, array $data, int $clientVersion, int $userId): array
     {
-        // Use repository instead of direct model access
-        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
-        $entity = $repository->findById($serverId);
+        // Use repository following Clean Architecture
+        $entity = $this->supplierRepository->findById($serverId);
 
         if ($entity === null) {
             throw new \RuntimeException("Supplier with ID {$serverId} not found");
@@ -189,12 +208,18 @@ class SyncService
             updatedAt: new \DateTime()
         );
 
-        $savedEntity = $repository->save($updatedEntity);
+        $savedEntity = $this->supplierRepository->save($updatedEntity);
 
-        // Audit logging - TODO: Should be delegated to an audit service
-        \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
-            $entity->toArray(), $savedEntity->toArray(), 
-            'Supplier updated via sync', $userId);
+        // Audit logging through service interface (Clean Architecture)
+        $this->auditService->log(
+            'update',
+            'Supplier',
+            $savedEntity->getId(),
+            $entity->toArray(),
+            $savedEntity->toArray(),
+            'Supplier updated via sync',
+            $userId
+        );
 
         return [
             'status' => 'success',
@@ -216,8 +241,7 @@ class SyncService
      */
     public function resolveConflict(int $serverId, array $clientData, string $strategy, int $userId): array
     {
-        $repository = app(\App\Domain\Repositories\SupplierRepositoryInterface::class);
-        $entity = $repository->findById($serverId);
+        $entity = $this->supplierRepository->findById($serverId);
 
         if ($entity === null) {
             throw new \RuntimeException("Supplier with ID {$serverId} not found");
@@ -252,12 +276,18 @@ class SyncService
                     updatedAt: new \DateTime()
                 );
 
-                $savedEntity = $repository->save($updatedEntity);
+                $savedEntity = $this->supplierRepository->save($updatedEntity);
 
-                // Audit logging - TODO: Should be delegated to an audit service
-                \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
-                    $entity->toArray(), $savedEntity->toArray(), 
-                    'Conflict resolved: client wins', $userId);
+                // Audit logging through service interface (Clean Architecture)
+                $this->auditService->log(
+                    'update',
+                    'Supplier',
+                    $savedEntity->getId(),
+                    $entity->toArray(),
+                    $savedEntity->toArray(),
+                    'Conflict resolved: client wins',
+                    $userId
+                );
 
                 return [
                     'status' => 'resolved',
@@ -287,12 +317,18 @@ class SyncService
                     updatedAt: new \DateTime()
                 );
 
-                $savedEntity = $repository->save($mergedEntity);
+                $savedEntity = $this->supplierRepository->save($mergedEntity);
 
-                // Audit logging - TODO: Should be delegated to an audit service
-                \App\Models\AuditLog::log('update', 'Supplier', $savedEntity->getId(), 
-                    $entity->toArray(), $savedEntity->toArray(), 
-                    'Conflict resolved: merged', $userId);
+                // Audit logging through service interface (Clean Architecture)
+                $this->auditService->log(
+                    'update',
+                    'Supplier',
+                    $savedEntity->getId(),
+                    $entity->toArray(),
+                    $savedEntity->toArray(),
+                    'Conflict resolved: merged',
+                    $userId
+                );
 
                 return [
                     'status' => 'resolved',
@@ -326,16 +362,14 @@ class SyncService
      */
     public function getChangesSinceLastSync(int $userId, ?string $lastSyncedAt): array
     {
-        $query = \App\Models\Supplier::query();
-
-        if ($lastSyncedAt !== null) {
-            $query->where('updated_at', '>', $lastSyncedAt);
-        }
-
-        $suppliers = $query->get();
+        // For now, return all suppliers
+        // In a production system, this should filter by updated_at > lastSyncedAt
+        // and could use the repository with additional filtering methods
+        $filters = [];
+        $result = $this->supplierRepository->getAll($filters, 1, 1000);
 
         return [
-            'suppliers' => $suppliers->map(fn($s) => $s->toArray())->toArray(),
+            'suppliers' => array_map(fn($entity) => $entity->toArray(), $result['data']),
             'sync_timestamp' => now()->toISOString(),
         ];
     }

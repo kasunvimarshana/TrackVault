@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
-use App\Models\AuditLog;
 use App\Application\UseCases\Supplier\CreateSupplierUseCase;
 use App\Application\UseCases\Supplier\UpdateSupplierUseCase;
 use App\Application\UseCases\Supplier\GetSupplierUseCase;
@@ -12,6 +11,7 @@ use App\Application\UseCases\Supplier\ListSuppliersUseCase;
 use App\Application\UseCases\Supplier\DeleteSupplierUseCase;
 use App\Application\DTOs\SupplierDTO;
 use App\Domain\Repositories\SupplierRepositoryInterface;
+use App\Domain\Services\AuditServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -25,10 +25,14 @@ use Illuminate\Support\Facades\Validator;
 class SupplierController extends Controller
 {
     private SupplierRepositoryInterface $repository;
+    private AuditServiceInterface $auditService;
 
-    public function __construct(SupplierRepositoryInterface $repository)
-    {
+    public function __construct(
+        SupplierRepositoryInterface $repository,
+        AuditServiceInterface $auditService
+    ) {
         $this->repository = $repository;
+        $this->auditService = $auditService;
     }
 
     /**
@@ -121,8 +125,8 @@ class SupplierController extends Controller
             $useCase = new CreateSupplierUseCase($this->repository);
             $supplier = $useCase->execute($dto);
 
-            // Log audit trail
-            AuditLog::log('create', 'Supplier', $supplier->getId(), null, $supplier->toArray(), 'Supplier created', auth()->id());
+            // Log audit trail using service (Clean Architecture)
+            $this->auditService->log('create', 'Supplier', $supplier->getId(), null, $supplier->toArray(), 'Supplier created', auth()->id());
 
             return response()->json([
                 'success' => true,
@@ -224,8 +228,8 @@ class SupplierController extends Controller
             $useCase = new UpdateSupplierUseCase($this->repository);
             $updatedSupplier = $useCase->execute($id, $dto);
 
-            // Log audit trail
-            AuditLog::log('update', 'Supplier', $updatedSupplier->getId(), 
+            // Log audit trail using service (Clean Architecture)
+            $this->auditService->log('update', 'Supplier', $updatedSupplier->getId(), 
                 $currentSupplier->toArray(), $updatedSupplier->toArray(), 
                 'Supplier updated', auth()->id());
 
@@ -268,8 +272,8 @@ class SupplierController extends Controller
             $useCase = new DeleteSupplierUseCase($this->repository);
             $useCase->execute($id);
 
-            // Log audit trail
-            AuditLog::log('delete', 'Supplier', $id, $oldData, null, 'Supplier deleted', auth()->id());
+            // Log audit trail using service (Clean Architecture)
+            $this->auditService->log('delete', 'Supplier', $id, $oldData, null, 'Supplier deleted', auth()->id());
 
             return response()->json([
                 'success' => true,
