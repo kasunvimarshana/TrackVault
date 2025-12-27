@@ -63,7 +63,7 @@ class UpdateSupplierUseCase
             version: $supplier->getVersion() + 1,
             id: $id,
             createdAt: $supplier->getCreatedAt(),
-            updatedAt: new \DateTime
+            updatedAt: new \DateTime()
         );
 
         // Persist the updated entity
